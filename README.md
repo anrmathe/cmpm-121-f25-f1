@@ -10,7 +10,7 @@ Testing Lead (Fiona):  This person will be responsible for both any automated te
 Technical Assistant (Kaushik): This person will support the team across all areas of software engineering that fall outside any single specialty. They will help teammates debug issues in their code, investigate errors, and propose fixes or improvements. The Technical Assistant should be comfortable tracing problems across different parts of the codebase, from tooling to runtime behavior. They may also help set up development environments, troubleshoot GPU or build issues, and ensure that everyone’s workflow runs smoothly. When team members hit technical roadblocks, the Technical Assistant is the point of contact. Their role is to unblock others quickly, document solutions, and keep the entire engineering process running efficiently.
 
 ## Tools and materials
-Engine: We will be using the LÖVE2D 
+Engine: We will be using the LÖVE2D engine for 
 
 Tell us about what engines, libraries, frameworks, and or platforms you intend to use, and give us a tiny bit of detail about why your team chose those. You are not committing to use this engine to finish the project, just sharing your initial thinking on engine choice. IMPORTANT: In order to satisfy the F1 Requirements, you'll need to choose something that doesn't already support high-level 3D rendering and physics (it must be something that requires you to bring those features in for yourself).
 
@@ -20,6 +20,11 @@ Generative AI: Tell us about your team's plan for using (or not using) tools bas
 ## Outlook
 Give us a short section on your outlook on the project. You might cover one or more of these topics:
 
-What is your team hoping to accomplish that other teams might not attempt?
-What do you anticipate being the hardest or riskiest part of the project?
-What are you hoping to learn by approaching the project with the tools and materials you selected above?
+**What is your team hoping to accomplish that other teams might not attempt?**
+- Answer
+
+**What do you anticipate being the hardest or riskiest part of the project?**
+- Answer
+
+**What are you hoping to learn by approaching the project with the tools and materials you selected above?**
+- Answer
