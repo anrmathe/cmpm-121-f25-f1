@@ -32,7 +32,7 @@ Overall, the LÖVE2D engine with these libraries seems to allow us to get closer
 
 **Tools:** We are using Visual Studio Code for writing code as it has strong TS and JS support, built-in Git integration, and access to the live share extension. We will use the G3D library for implementing 3D flat puzzles as it seems simple to learn and use. 
 
-**Generative AI:** We plan to use generative AI for several aspects, which include: debugging, how to improve the efficiency of the code, 
+**Generative AI:** We plan to use generative AI for several aspects, which include: debugging and how to refactor and improve the efficiency of the code. 
 
 ## Outlook
 Give us a short section on your outlook on the project. You might cover one or more of these topics:
