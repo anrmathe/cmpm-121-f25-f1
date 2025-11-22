@@ -37,7 +37,7 @@ Overall, the LÖVE2D engine with these libraries seems to allow us to get closer
 ## Outlook
 Give us a short section on your outlook on the project. You might cover one or more of these topics:
 
-- tentative idea for project: sudoku game with 3 different ways of playing sudoku - regular sudoku (1 board of 3 by 3), 3d sudoku (3 boards of 3 by 3), and cube sudoku (6 boards pieced together to make a cube)
+- sudoku game with 3 modes (classic, 3d, cube) and 3 difficulties (easy, medium, hard)
 
 **What is your team hoping to accomplish that other teams might not attempt?**
 - make a relatively straight forwards puzzle game (regular sudoku) more complicated lol

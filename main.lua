@@ -1,7 +1,6 @@
 selectedRow = nil
 selectedCol = nil
 
-
 function love.load()
     cellSize = 50
     selectedRow = nil
