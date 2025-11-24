@@ -71,6 +71,9 @@ function love.load()
     selectedRow = nil
     selectedCol = nil
     paletteY = cellSize*9 + 20
+    gridFont = love.graphics.newFont(26) -- separating font sizes :]
+    paletteFont = love.graphics.newFont(22)   
+
 
     grid = {}  -- 9x9 empty grid
     for i = 1, 9 do
@@ -117,8 +120,11 @@ function love.draw()
                 if originalGrid[i][j] ~= 0 then
                     love.graphics.setColor(0,0,0)
                 else
-                    love.graphics.setColor(0.3,0.3,0.3)
+                    love.graphics.setColor(0,0.5,1)
                 end
+                
+                love.graphics.setFont(gridFont)
+
 
                 love.graphics.print(
                     grid[i][j],
@@ -153,6 +159,7 @@ function love.draw()
         love.graphics.rectangle("fill", gridOffsetX + (n-1)*cellSize, paletteY, cellSize, cellSize)
         love.graphics.setColor(0,0,0)
         love.graphics.rectangle("line", gridOffsetX + (n-1)*cellSize, paletteY, cellSize, cellSize)
+        love.graphics.setFont(paletteFont)
         love.graphics.print(n, gridOffsetX + (n-1)*cellSize + cellSize/3, paletteY + cellSize/4)
     end
 
