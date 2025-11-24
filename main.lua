@@ -1,6 +1,70 @@
 selectedRow = nil
 selectedCol = nil
 
+function isSafe(grid, row, col, num)
+    for c=1,9 do
+        if grid[row][c] == num then return false end
+    end
+
+    for r=1,9 do
+        if grid[r][col] == num then return false end
+    end
+
+    local boxR = math.floor((row-1)/3)*3 + 1
+    local boxC = math.floor((col-1)/3)*3 + 1
+    for r=boxR, boxR+2 do
+        for c=boxC, boxC+2 do
+            if grid[r][c] == num then return false end
+        end
+    end
+
+    return true
+end
+
+function solveSudoku(grid, row, col)
+    if row == 10 then return true end
+    if col == 10 then return solveSudoku(grid, row+1, 1) end
+
+    if grid[row][col] ~= 0 then
+        return solveSudoku(grid, row, col+1)
+    end
+
+    local nums = {1,2,3,4,5,6,7,8,9}
+
+    for i = 9, 2, -1 do
+        local j = love.math.random(1, i)
+        nums[i], nums[j] = nums[j], nums[i]
+    end
+
+    for i=1,9 do
+        if isSafe(grid, row, col, nums[i]) then
+            grid[row][col] = nums[i]
+
+            if solveSudoku(grid, row, col+1) then
+                return true
+            end
+
+            grid[row][col] = 0
+        end
+    end
+
+    return false
+end
+
+function makePuzzle(grid, holes) -- removes numbers from solved board to make puzzle
+    local removed = 0
+
+    while removed < holes do
+        local r = love.math.random(1,9)
+        local c = love.math.random(1,9)
+
+        if grid[r][c] ~= 0 then
+            grid[r][c] = 0
+            removed = removed + 1
+        end
+    end
+end
+
 
 function love.load()
     cellSize = 50
@@ -15,6 +79,9 @@ function love.load()
             grid[i][j] = 0 -- 0 means empty
         end
     end
+
+    solveSudoku(grid, 1, 1)
+    makePuzzle(grid, 40)
 end
 
 function love.draw()
@@ -75,3 +142,5 @@ function love.mousepressed(x, y, button)
         end
     end
 end
+
+
