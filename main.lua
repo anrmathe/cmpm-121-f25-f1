@@ -82,6 +82,19 @@ function love.load()
 
     solveSudoku(grid, 1, 1)
     makePuzzle(grid, 40)
+
+    originalGrid = {}
+    for i = 1, 9 do
+        originalGrid[i] = {}
+        for j = 1, 9 do
+            originalGrid[i][j] = grid[i][j]
+        end
+    end
+    
+    gridOffsetX = (love.graphics.getWidth() - cellSize * 9) / 2
+    gridOffsetY = (love.graphics.getHeight() - (cellSize * 9 + 20 + cellSize)) / 2
+
+    paletteY = gridOffsetY + cellSize * 9 + 20
 end
 
 function love.draw()
@@ -89,12 +102,29 @@ function love.draw()
     for i = 1, 9 do
         for j = 1, 9 do
             love.graphics.setColor(1,1,1)
-            love.graphics.rectangle("fill", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
+            love.graphics.rectangle("fill",
+                gridOffsetX + (j-1)*cellSize,
+                gridOffsetY + (i-1)*cellSize,
+                cellSize, cellSize)
+
             love.graphics.setColor(0,0,0)
-            love.graphics.rectangle("line", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
+            love.graphics.rectangle("line",
+                gridOffsetX + (j-1)*cellSize,
+                gridOffsetY + (i-1)*cellSize,
+                cellSize, cellSize)
 
             if grid[i][j] ~= 0 then
-                love.graphics.print(grid[i][j], (j-1)*cellSize + cellSize/3, (i-1)*cellSize + cellSize/4)
+                if originalGrid[i][j] ~= 0 then
+                    love.graphics.setColor(0,0,0)
+                else
+                    love.graphics.setColor(0.3,0.3,0.3)
+                end
+
+                love.graphics.print(
+                    grid[i][j],
+                    gridOffsetX + (j-1)*cellSize + cellSize/3,
+                    gridOffsetY + (i-1)*cellSize + cellSize/4
+                )
             end
         end
     end
@@ -102,24 +132,37 @@ function love.draw()
     -- Draw thicker 3x3 lines
     love.graphics.setLineWidth(3)
     for i = 0,3 do
-        love.graphics.line(0, i*cellSize*3, 9*cellSize, i*cellSize*3)
-        love.graphics.line(i*cellSize*3, 0, i*cellSize*3, 9*cellSize)
+        love.graphics.line(
+            gridOffsetX,
+            gridOffsetY + i*cellSize*3,
+            gridOffsetX + 9*cellSize,
+            gridOffsetY + i*cellSize*3
+        )
+        love.graphics.line(
+            gridOffsetX + i*cellSize*3,
+            gridOffsetY,
+            gridOffsetX + i*cellSize*3,
+            gridOffsetY + 9*cellSize
+        )
     end
     love.graphics.setLineWidth(1)
 
     -- Draw number palette
     for n = 1, 9 do
         love.graphics.setColor(0.8,0.8,0.8)
-        love.graphics.rectangle("fill", (n-1)*cellSize, paletteY, cellSize, cellSize)
+        love.graphics.rectangle("fill", gridOffsetX + (n-1)*cellSize, paletteY, cellSize, cellSize)
         love.graphics.setColor(0,0,0)
-        love.graphics.rectangle("line", (n-1)*cellSize, paletteY, cellSize, cellSize)
-        love.graphics.print(n, (n-1)*cellSize + cellSize/3, paletteY + cellSize/4)
+        love.graphics.rectangle("line", gridOffsetX + (n-1)*cellSize, paletteY, cellSize, cellSize)
+        love.graphics.print(n, gridOffsetX + (n-1)*cellSize + cellSize/3, paletteY + cellSize/4)
     end
 
     -- Draw selection highlight
     if selectedRow and selectedCol then
         love.graphics.setColor(1,1,0,0.5)
-        love.graphics.rectangle("fill", (selectedCol-1)*cellSize, (selectedRow-1)*cellSize, cellSize, cellSize)
+        love.graphics.rectangle("fill",
+            gridOffsetX + (selectedCol-1)*cellSize,
+            gridOffsetY + (selectedRow-1)*cellSize,
+            cellSize, cellSize)
     end
 
     love.graphics.setColor(0,0,0)
@@ -128,19 +171,29 @@ end
 function love.mousepressed(x, y, button)
     if button == 1 then
         -- Grid selection
-        if x < cellSize*9 and y < cellSize*9 then
-            selectedCol = math.floor(x / cellSize) + 1
-            selectedRow = math.floor(y / cellSize) + 1
+        if x >= gridOffsetX and x < gridOffsetX + cellSize*9 and
+           y >= gridOffsetY and y < gridOffsetY + cellSize*9 then
+
+            local col = math.floor((x - gridOffsetX) / cellSize) + 1
+            local row = math.floor((y - gridOffsetY) / cellSize) + 1
+
+            if originalGrid[row][col] == 0 then
+                selectedRow = row
+                selectedCol = col
+            end
         end
 
         -- Palette selection
         if y >= paletteY and y <= paletteY + cellSize then
-            local numClicked = math.floor(x / cellSize) + 1
+            local numClicked = math.floor((x - gridOffsetX) / cellSize) + 1
             if selectedRow and selectedCol and numClicked >= 1 and numClicked <= 9 then
-                grid[selectedRow][selectedCol] = numClicked
+                if originalGrid[selectedRow][selectedCol] == 0 then
+                    grid[selectedRow][selectedCol] = numClicked
+                end
             end
         end
     end
 end
+
 
 
