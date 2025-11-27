@@ -1,77 +1,259 @@
-selectedRow = nil
-selectedCol = nil
+-- main.lua - Mode Switcher for 2D/3D Sudoku
 
+local mode = nil  -- nil means menu, "2d" or "3d" for game modes
+local mode2d = nil
+local mode3d = nil
 
 function love.load()
-    cellSize = 50
-    selectedRow = nil
-    selectedCol = nil
-    paletteY = cellSize*9 + 20
-
-    grid = {}  -- 9x9 empty grid
-    for i = 1, 9 do
-        grid[i] = {}
-        for j = 1, 9 do
-            grid[i][j] = 0 -- 0 means empty
-        end
-    end
+    love.window.setTitle("Sudoku - 2D/3D")
+    love.window.setMode(1200, 900)
 end
 
 function love.draw()
-    -- Draw grid
-    for i = 1, 9 do
-        for j = 1, 9 do
-            love.graphics.setColor(1,1,1)
-            love.graphics.rectangle("fill", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
-            love.graphics.setColor(0,0,0)
-            love.graphics.rectangle("line", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
-
-            if grid[i][j] ~= 0 then
-                love.graphics.print(grid[i][j], (j-1)*cellSize + cellSize/3, (i-1)*cellSize + cellSize/4)
-            end
+    if mode == nil then
+        -- Draw menu
+        love.graphics.clear(0.2, 0.2, 0.3)
+        
+        local width, height = love.graphics.getDimensions()
+        
+        -- Title
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("SUDOKU", 0, height/2 - 150, width, "center")
+        love.graphics.printf("Choose Mode:", 0, height/2 - 80, width, "center")
+        
+        -- 2D Button
+        local button2DX = width/2 - 200
+        local button2DY = height/2
+        local buttonWidth = 150
+        local buttonHeight = 60
+        
+        love.graphics.setColor(0.3, 0.5, 0.8)
+        love.graphics.rectangle("fill", button2DX, button2DY, buttonWidth, buttonHeight, 10, 10)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("2D Mode", button2DX, button2DY + 20, buttonWidth, "center")
+        
+        -- 3D Button
+        local button3DX = width/2 + 50
+        local button3DY = height/2
+        
+        love.graphics.setColor(0.5, 0.3, 0.8)
+        love.graphics.rectangle("fill", button3DX, button3DY, buttonWidth, buttonHeight, 10, 10)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("3D Mode", button3DX, button3DY + 20, buttonWidth, "center")
+        
+        -- Instructions
+        love.graphics.setColor(0.7, 0.7, 0.7)
+        love.graphics.printf("Press ESC in game to return to menu", 0, height - 50, width, "center")
+    elseif mode == "2d" then
+        if mode2d then
+            mode2d.draw()
+        end
+    elseif mode == "3d" then
+        if mode3d then
+            mode3d.draw()
         end
     end
+end
 
-    -- Draw thicker 3x3 lines
-    love.graphics.setLineWidth(3)
-    for i = 0,3 do
-        love.graphics.line(0, i*cellSize*3, 9*cellSize, i*cellSize*3)
-        love.graphics.line(i*cellSize*3, 0, i*cellSize*3, 9*cellSize)
+function love.update(dt)
+    if mode == "2d" and mode2d then
+        mode2d.update(dt)
+    elseif mode == "3d" and mode3d then
+        mode3d.update(dt)
     end
-    love.graphics.setLineWidth(1)
-
-    -- Draw number palette
-    for n = 1, 9 do
-        love.graphics.setColor(0.8,0.8,0.8)
-        love.graphics.rectangle("fill", (n-1)*cellSize, paletteY, cellSize, cellSize)
-        love.graphics.setColor(0,0,0)
-        love.graphics.rectangle("line", (n-1)*cellSize, paletteY, cellSize, cellSize)
-        love.graphics.print(n, (n-1)*cellSize + cellSize/3, paletteY + cellSize/4)
-    end
-
-    -- Draw selection highlight
-    if selectedRow and selectedCol then
-        love.graphics.setColor(1,1,0,0.5)
-        love.graphics.rectangle("fill", (selectedCol-1)*cellSize, (selectedRow-1)*cellSize, cellSize, cellSize)
-    end
-
-    love.graphics.setColor(0,0,0)
 end
 
 function love.mousepressed(x, y, button)
-    if button == 1 then
-        -- Grid selection
-        if x < cellSize*9 and y < cellSize*9 then
-            selectedCol = math.floor(x / cellSize) + 1
-            selectedRow = math.floor(y / cellSize) + 1
+    if mode == nil then
+        local width, height = love.graphics.getDimensions()
+        
+        -- Check 2D button
+        local button2DX = width/2 - 200
+        local button2DY = height/2
+        local buttonWidth = 150
+        local buttonHeight = 60
+        
+        if x >= button2DX and x <= button2DX + buttonWidth and
+           y >= button2DY and y <= button2DY + buttonHeight then
+            mode = "2d"
+            mode2d = require("2d")
+            mode2d.load()
         end
+        
+        -- Check 3D button
+        local button3DX = width/2 + 50
+        local button3DY = height/2
+        
+        if x >= button3DX and x <= button3DX + buttonWidth and
+           y >= button3DY and y <= button3DY + buttonHeight then
+            mode = "3d"
+            mode3d = require("3d")
+            mode3d.load()
+        end
+    elseif mode == "2d" and mode2d then
+        mode2d.mousepressed(x, y, button)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousepressed(x, y, button)
+    end
+end
 
-        -- Palette selection
-        if y >= paletteY and y <= paletteY + cellSize then
-            local numClicked = math.floor(x / cellSize) + 1
-            if selectedRow and selectedCol and numClicked >= 1 and numClicked <= 9 then
-                grid[selectedRow][selectedCol] = numClicked
-            end
+function love.mousereleased(x, y, button)
+    if mode == "2d" and mode2d then
+        mode2d.mousereleased(x, y, button)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousereleased(x, y, button)
+    end
+end
+
+function love.mousemoved(x, y, dx, dy)
+    if mode == "2d" and mode2d and mode2d.mousemoved then
+        mode2d.mousemoved(x, y, dx, dy)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousemoved(x, y, dx, dy)
+    end
+end
+
+function love.keypressed(key)
+    if key == "escape" then
+        if mode ~= nil then
+            mode = nil
+            mode2d = nil
+            mode3d = nil
+        else
+            love.event.quit()
         end
+    elseif mode == "2d" and mode2d then
+        mode2d.keypressed(key)
+    elseif mode == "3d" and mode3d then
+        mode3d.keypressed(key)
+    end
+end-- main.lua - Mode Switcher for 2D/3D Sudoku
+
+local mode = nil  -- nil means menu, "2d" or "3d" for game modes
+local mode2d = nil
+local mode3d = nil
+
+function love.load()
+    love.window.setTitle("Sudoku - 2D/3D")
+    love.window.setMode(1200, 900)
+end
+
+function love.draw()
+    if mode == nil then
+        -- Draw menu
+        love.graphics.clear(0.2, 0.2, 0.3)
+        
+        local width, height = love.graphics.getDimensions()
+        
+        -- Title
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("SUDOKU", 0, height/2 - 150, width, "center")
+        love.graphics.printf("Choose Mode:", 0, height/2 - 80, width, "center")
+        
+        -- 2D Button
+        local button2DX = width/2 - 200
+        local button2DY = height/2
+        local buttonWidth = 150
+        local buttonHeight = 60
+        
+        love.graphics.setColor(0.3, 0.5, 0.8)
+        love.graphics.rectangle("fill", button2DX, button2DY, buttonWidth, buttonHeight, 10, 10)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("2D Mode", button2DX, button2DY + 20, buttonWidth, "center")
+        
+        -- 3D Button
+        local button3DX = width/2 + 50
+        local button3DY = height/2
+        
+        love.graphics.setColor(0.5, 0.3, 0.8)
+        love.graphics.rectangle("fill", button3DX, button3DY, buttonWidth, buttonHeight, 10, 10)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.printf("3D Mode", button3DX, button3DY + 20, buttonWidth, "center")
+        
+        -- Instructions
+        love.graphics.setColor(0.7, 0.7, 0.7)
+        love.graphics.printf("Press ESC in game to return to menu", 0, height - 50, width, "center")
+    elseif mode == "2d" then
+        if mode2d then
+            mode2d.draw()
+        end
+    elseif mode == "3d" then
+        if mode3d then
+            mode3d.draw()
+        end
+    end
+end
+
+function love.update(dt)
+    if mode == "2d" and mode2d then
+        mode2d.update(dt)
+    elseif mode == "3d" and mode3d then
+        mode3d.update(dt)
+    end
+end
+
+function love.mousepressed(x, y, button)
+    if mode == nil then
+        local width, height = love.graphics.getDimensions()
+        
+        -- Check 2D button
+        local button2DX = width/2 - 200
+        local button2DY = height/2
+        local buttonWidth = 150
+        local buttonHeight = 60
+        
+        if x >= button2DX and x <= button2DX + buttonWidth and
+           y >= button2DY and y <= button2DY + buttonHeight then
+            mode = "2d"
+            mode2d = require("2d")
+            mode2d.load()
+        end
+        
+        -- Check 3D button
+        local button3DX = width/2 + 50
+        local button3DY = height/2
+        
+        if x >= button3DX and x <= button3DX + buttonWidth and
+           y >= button3DY and y <= button3DY + buttonHeight then
+            mode = "3d"
+            mode3d = require("3d")
+            mode3d.load()
+        end
+    elseif mode == "2d" and mode2d then
+        mode2d.mousepressed(x, y, button)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousepressed(x, y, button)
+    end
+end
+
+function love.mousereleased(x, y, button)
+    if mode == "2d" and mode2d then
+        mode2d.mousereleased(x, y, button)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousereleased(x, y, button)
+    end
+end
+
+function love.mousemoved(x, y, dx, dy)
+    if mode == "2d" and mode2d and mode2d.mousemoved then
+        mode2d.mousemoved(x, y, dx, dy)
+    elseif mode == "3d" and mode3d then
+        mode3d.mousemoved(x, y, dx, dy)
+    end
+end
+
+function love.keypressed(key)
+    if key == "escape" then
+        if mode ~= nil then
+            mode = nil
+            mode2d = nil
+            mode3d = nil
+        else
+            love.event.quit()
+        end
+    elseif mode == "2d" and mode2d then
+        mode2d.keypressed(key)
+    elseif mode == "3d" and mode3d then
+        mode3d.keypressed(key)
     end
 end
