@@ -90,23 +90,27 @@ local function isValidPlacement(faceIndex, row, col, value)
     
     local board = boards[faceIndex]
     
+    -- Check row
     for c = 1, 9 do
         if c ~= col and board[row][c].value == value then
             return false, "Number " .. value .. " already exists in this row!"
         end
     end
     
+    -- Check column
     for r = 1, 9 do
         if r ~= row and board[r][col].value == value then
             return false, "Number " .. value .. " already exists in this column!"
         end
     end
     
-    local boxRow = math.floor((row - 1) / 3) * 3
-    local boxCol = math.floor((col - 1) / 3) * 3
+    -- Check 3x3 box
+    -- Calculate the top-left corner of the 3x3 box this cell belongs to
+    local boxStartRow = math.floor((row - 1) / 3) * 3 + 1
+    local boxStartCol = math.floor((col - 1) / 3) * 3 + 1
     
-    for r = boxRow + 1, boxRow + 3 do
-        for c = boxCol + 1, boxCol + 3 do
+    for r = boxStartRow, boxStartRow + 2 do
+        for c = boxStartCol, boxStartCol + 2 do
             if (r ~= row or c ~= col) and board[r][c].value == value then
                 return false, "Number " .. value .. " already exists in this 3x3 box!"
             end
@@ -227,20 +231,34 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     love.graphics.setColor(0.1, 0.1, 0.2, 1)
     love.graphics.setLineWidth(3)
     
-    if col == 3 or col == 6 or col == 9 then
+    -- Draw thick lines on the RIGHT edge of columns 3 and 6, and LEFT edge of column 1, and RIGHT edge of column 9
+    if col == 3 or col == 6 then
         love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
     end
     
-    if row == 3 or row == 6 or row == 9 then
+    -- Draw thick lines on the BOTTOM edge of rows 3 and 6, and TOP edge of row 1, and BOTTOM edge of row 9
+    if row == 3 or row == 6 then
         love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     end
     
+    -- Draw thick line on the left edge (column 1)
     if col == 1 then
         love.graphics.line(corners[4].x, corners[4].y, corners[1].x, corners[1].y)
     end
     
+    -- Draw thick line on the top edge (row 1)
     if row == 1 then
         love.graphics.line(corners[1].x, corners[1].y, corners[2].x, corners[2].y)
+    end
+    
+    -- Draw thick line on the right edge (column 9)
+    if col == 9 then
+        love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
+    end
+    
+    -- Draw thick line on the bottom edge (row 9)
+    if row == 9 then
+        love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     end
     
     if cell.value > 0 then
