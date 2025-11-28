@@ -117,7 +117,6 @@ function makePuzzle(grid, holes) -- removes numbers from solved board to make pu
     end
 end
 
-
 function love.load()
     cellSize = 50
     selectedRow = nil
