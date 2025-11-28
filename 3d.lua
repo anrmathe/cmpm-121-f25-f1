@@ -63,25 +63,38 @@ local function project3D(x, y, z, width, height)
 end
 
 local function getCellPosition(faceIndex, row, col)
-    local face = faces[faceIndex]
     local localX = (col - 5) * cellSize
     local localY = (row - 5) * cellSize
-    
+
     local x, y, z
-    if faceIndex == 1 then
-        x, y, z = localX, localY, face.offset[3]
-    elseif faceIndex == 2 then
-        x, y, z = -localX, localY, face.offset[3]
-    elseif faceIndex == 3 then
-        x, y, z = face.offset[1], localY, -localX
-    elseif faceIndex == 4 then
-        x, y, z = face.offset[1], localY, localX
-    elseif faceIndex == 5 then
-        x, y, z = localX, face.offset[2], -localY
-    elseif faceIndex == 6 then
-        x, y, z = localX, face.offset[2], localY
+    local off = faces[faceIndex].offset
+
+    if faceIndex == 1 then -- back
+        x = localX
+        y = localY
+        z = off[3]
+    elseif faceIndex == 2 then -- front
+        x = localX
+        y = localY
+        z = off[3]
+    elseif faceIndex == 3 then -- right
+        x = off[1]
+        y = localY
+        z = localX
+    elseif faceIndex == 4 then -- left
+        x = off[1]
+        y = localY
+        z = localX
+    elseif faceIndex == 5 then -- bottom
+        x = localX
+        y = off[2]
+        z = localY
+    elseif faceIndex == 6 then -- top
+        x = localX
+        y = off[2]
+        z = localY
     end
-    
+
     return x, y, z
 end
 
