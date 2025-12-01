@@ -262,7 +262,7 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     end
     
     if cell.fixed then
-        love.graphics.setColor(0.8, 0.8, 0.8, 1)
+        love.graphics.setColor(0.8, 0.8, 0.9, 1)
     end
     
     love.graphics.polygon('fill', corners[1].x, corners[1].y, corners[2].x, corners[2].y,
