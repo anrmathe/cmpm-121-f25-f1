@@ -2,7 +2,7 @@ cmpm-121-f25-f1
 
 # Devlop Entry - 11/30/25
 
-## Requirements
+## How we satisfied the software requirements
 
 **The game uses the same 3D rendering and physics simulation identified by the team for F1 or suitable replacements that still satisfy the F1 requirements.**
   - We are currently using [g3d](https://github.com/groverburger/g3d) for the 3D physics as we had mentioned in our F1. 
@@ -24,6 +24,12 @@ cmpm-121-f25-f1
 
 **Via play, the game can reach at least one conclusive ending.**
   - Still working on this.
+
+## Reflection 
+
+**Looking back on how you achieved the F2 requirements, how has your team’s plan changed since your F1 devlog? There’s learning value in you documenting how your team’s thinking has changed over time.**
+  - Reflection here
+
 
 
 # Devlog Entry - 11/14/25
