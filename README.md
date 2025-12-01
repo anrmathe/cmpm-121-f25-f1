@@ -1,6 +1,40 @@
-cmpm-121-f25-f1
+CMPM-121-F25-F1
 
-# Devlop Entry - 11/30/25
+# Devlog Entry 3 - 12/05/2025
+
+## How we satisfied the software requirements
+
+**[continuous inventory] The game must involve one inventory item for which the continuous quantity matters in an interesting way (e.g. a bucket holds some continuously variable number of liters of water, but the bucket can't put out the fire unless it has enough water).**
+- TBD
+
+**[offline mobile] Support offline play on some smartphone-class mobile device (i.e. some way of installing the app so that it can be played by players who don't have live internet access).**
+- TBD
+
+**[save system] Support multiple save points as well as an auto-save feature so that the player cannot lose progress by accidentally closing the game app.**
+- TBD
+
+**[visual themes] Support light and dark modes visual styles that respond to the user's preferences set in the host environment (e.g. operating system or browser, not in-game settings), and these visual styles are integrated deeply into the game's display (e.g. day/night lighting of the fictional rooms, not just changing the border color of the game window)**
+- TBD
+
+**[touchscreen] Support touchscreen-only gameplay (no requirement of mouse and keyboard).**
+- TBD
+
+**[i18n + l10n] Support three different natural languages including English, a language with a logographic script (e.g. 中文), and a language with a right-to-left script (e.g. العربية).**
+- TBD
+
+**[unlimited undo] Support unlimited levels of undo of the major play actions (such as moving to a scene or interacting with a specific object, but don't worry about undo within a physics interaction)**
+- TBD
+
+**[external DSL] Use an external DSL to define some of the most important design details in the game (possibly reusing an existing syntax like XML, JSON, or s-expressions), and create some kind of tool support for that DSL (e.g. in-editor syntax highlighting).**
+- TBD
+
+## Reflection
+**Looking back on how you achieved the F3 requirements, how has your team’s plan changed since your F3 devlog? There’s learning value in you documenting how your team’s thinking has changed over time.**
+- Reflection here
+
+
+
+# Devlog Entry 2 - 12/01/2025
 
 ## How we satisfied the software requirements
 
@@ -32,7 +66,7 @@ cmpm-121-f25-f1
 
 
 
-# Devlog Entry - 11/14/25
+# Devlog Entry 1 - 11/21/2025
 
 ## Introducing the team
 Tools Lead (Hannah): This person will research alternative tools, identify good ones, and help every other team member set them up on their own machine in the best configuration for your project. This person might also establish your team’s coding style guidelines and help peers setup auto-formatting systems. This person should provide support for systems like source control and automated deployment (if appropriate to your team’s approach).
