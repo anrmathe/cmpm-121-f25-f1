@@ -1,5 +1,23 @@
 cmpm-121-f25-f1
 
+# Devlop Entry - 11/30/25
+
+## Requirements
+- **The game uses the same 3D rendering and physics simulation identified by the team for F1 or suitable replacements that still satisfy the F1 requirements.**
+  - We are currently using [g3d](https://github.com/groverburger/g3d) for the 3D physics as we had mentioned in our F1. 
+- **The game must allow the player to move between scenes (e.g. rooms)**
+  - The player is able to move between the puzzle and the menu by clicking the ESC key and then clicking the respective button for which type of game they would like to play
+- **The game must allow the player to select specific objects in a scene for interaction (e.g. tapping an item to pick it up or examine it)**
+  - Players are able to click each individual cell (minus the ones that are given for the puzzle) and add in a number or change a number previously added.
+- **The game maintains an inventory system allowing the player to carry objects so that what happens in one scene has an impact on what is possible in another scene.**
+  - Still currently working on this.
+- **The game contains at least one physics-based puzzle that is relevant to the player's progress in the game.**
+  - Still currently working on this.
+- **The player can succeed or fail at the physics-based puzzle on the basis of their skill and/or reasoning (rather than luck)**
+  - The sudoku puzzles can only be won through deduction and critical thinking. The only way luck can be on the player's side is if they continuously keep guessing, that would take a really long time, though. 
+- **Via play, the game can reach at least one conclusive ending.**
+  - Still working on this.
+
 # Devlog Entry - 11/14/25
 
 ## Introducing the team
