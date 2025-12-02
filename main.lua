@@ -48,12 +48,21 @@ function love.draw()
         if mode2d then mode2d.draw() end
     elseif mode == "3d" then
         if mode3d then mode3d.draw() end
+    elseif mode == "win" then
+        local winScreen = require("win")
+        winScreen.draw()
     end
 end
 
 function love.update(dt)
     if mode == "2d" and mode2d then
-        mode2d.update(dt)
+        local result = mode2d.update(dt)
+        if result == "win" then
+            mode = "win"
+            mode2d = nil
+            mode3d = nil
+            difficultyModule = nil
+        end
     elseif mode == "3d" and mode3d then
         mode3d.update(dt)
     end

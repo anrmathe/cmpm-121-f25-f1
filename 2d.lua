@@ -16,23 +16,26 @@ local offsetX = 0
 local offsetY = 0
 
 function isSafe(grid, row, col, num)
-    for c=1,9 do
-        if grid[row][c] == num then return false end
+    for c = 1, 9 do
+        if c ~= col and grid[row][c] == num then return false end
     end
-    for r=1,9 do
-        if grid[r][col] == num then return false end
+    for r = 1, 9 do
+        if r ~= row and grid[r][col] == num then return false end
     end
 
     local boxR = math.floor((row-1)/3)*3 + 1
     local boxC = math.floor((col-1)/3)*3 + 1
-    for r=boxR, boxR+2 do
-        for c=boxC, boxC+2 do
-            if grid[r][c] == num then return false end
+
+    for r = boxR, boxR+2 do
+        for c = boxC, boxC+2 do
+            if (r ~= row or c ~= col) and grid[r][c] == num then
+                return false
+            end
         end
     end
+
     return true
 end
-
 function solveSudoku(grid, row, col)
     if row == 10 then return true end
     if col == 10 then return solveSudoku(grid, row+1, 1) end
@@ -96,6 +99,17 @@ local function isValidPlacement(row, col, value)
     return true
 end
 
+local function isPuzzleComplete()
+    for i = 1, 9 do
+        for j = 1, 9 do
+            if grid[i][j] == 0 or not isSafe(grid, i, j, grid[i][j]) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 function module.load(difficulty)
     cellSize = 40
 
@@ -107,7 +121,6 @@ function module.load(difficulty)
     grid = {}
     fixed = {}
 
-    -- build empty grid
     for i = 1, 9 do
         grid[i] = {}
         for j = 1, 9 do
@@ -115,24 +128,21 @@ function module.load(difficulty)
         end
     end
 
-    -- full solution
     solveSudoku(grid,1,1)
 
-    -- difficulty (holes)
-    local holes = 45
+    local holes = 45 -- default
     if difficulty == "testing" then
         holes = 2
     elseif difficulty == "easy" then
         holes = 25
     elseif difficulty == "medium" then
-        holes = 40
+        holes = 45
     elseif difficulty == "hard" then
         holes = 60
     end
 
     makePuzzle(grid, holes)
 
-    -- mark fixed cells
     for i = 1, 9 do
         fixed[i] = {}
         for j = 1, 9 do
@@ -140,7 +150,6 @@ function module.load(difficulty)
         end
     end
 
-    -- center grid
     local boardSize = cellSize * 9
     offsetX = (love.graphics.getWidth() - boardSize) / 2
     offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
@@ -154,6 +163,10 @@ function module.update(dt)
         if errorTimer <= 0 then
             errorMessage = ""
         end
+    end
+
+    if isPuzzleComplete() then
+        return "win"
     end
 end
 
