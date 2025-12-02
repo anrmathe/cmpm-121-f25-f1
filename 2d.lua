@@ -11,7 +11,7 @@ local fixed = {}
 local errorMessage = ""
 local errorTimer = 0
 
--- Center offsets
+-- center offsets
 local offsetX = 0
 local offsetY = 0
 
@@ -96,7 +96,7 @@ local function isValidPlacement(row, col, value)
     return true
 end
 
-function module.load()
+function module.load(difficulty)
     cellSize = 40
 
     selectedRow = nil
@@ -107,6 +107,7 @@ function module.load()
     grid = {}
     fixed = {}
 
+    -- build empty grid
     for i = 1, 9 do
         grid[i] = {}
         for j = 1, 9 do
@@ -114,9 +115,24 @@ function module.load()
         end
     end
 
+    -- full solution
     solveSudoku(grid,1,1)
-    makePuzzle(grid, love.math.random(40,55))
 
+    -- difficulty (holes)
+    local holes = 45
+    if difficulty == "testing" then
+        holes = 2
+    elseif difficulty == "easy" then
+        holes = 25
+    elseif difficulty == "medium" then
+        holes = 40
+    elseif difficulty == "hard" then
+        holes = 60
+    end
+
+    makePuzzle(grid, holes)
+
+    -- mark fixed cells
     for i = 1, 9 do
         fixed[i] = {}
         for j = 1, 9 do
@@ -124,7 +140,7 @@ function module.load()
         end
     end
 
-    -- Center offsets calculated AFTER cellSize defined
+    -- center grid
     local boardSize = cellSize * 9
     offsetX = (love.graphics.getWidth() - boardSize) / 2
     offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
