@@ -27,18 +27,24 @@ local function multiplyMatrixVector(mat, vec)
     local y = vec.x * mat[5] + vec.y * mat[6] + vec.z * mat[7] + mat[8]
     local z = vec.x * mat[9] + vec.y * mat[10] + vec.z * mat[11] + mat[12]
     local w = vec.x * mat[13] + vec.y * mat[14] + vec.z * mat[15] + mat[16]
-    if w ~= 0 then x, y, z = x/w, y/w, z/w end
+    
+    if w ~= 0 then 
+      x, y, z = x/w, y/w, z/w 
+    end
+    
     return {x = x, y = y, z = z, w = w}
 end
 
 local function getRotationMatrix(rx, ry)
     local cosX, sinX = math.cos(rx), math.sin(rx)
     local cosY, sinY = math.cos(ry), math.sin(ry)
+    
     return {
         cosY, sinX * sinY, cosX * sinY, 0,
         0, cosX, -sinX, 0,
         -sinY, sinX * cosY, cosX * cosY, 0,
         0, 0, 0, 1
+    
     }
 end
 
@@ -47,7 +53,9 @@ local function project3D(x, y, z, width, height)
     local distance = 1200
     local mat = getRotationMatrix(rotation.x, rotation.y)
     local rotated = multiplyMatrixVector(mat, {x = x, y = y, z = z})
+    
     rotated.z = rotated.z + distance
+    
     local factor = fov / rotated.z
     local screenX = rotated.x * factor + width / 2
     local screenY = rotated.y * factor + height / 2
@@ -59,35 +67,61 @@ local function getCellPosition(faceIndex, row, col)
     local localY = (row - 5) * cellSize
     local x, y, z
     local off = faces[faceIndex].offset
+    
     if faceIndex == 1 then
-        x = localX; y = localY; z = off[3]
+        x = localX; 
+        y = localY; 
+        z = off[3]
+    
     elseif faceIndex == 2 then
-        x = localX; y = localY; z = off[3]
-    elseif faceIndex == 3 then
-        x = off[1]; y = localY; z = localX
+        x = localX; 
+        y = localY; 
+        z = off[3]
+   
+   elseif faceIndex == 3 then
+        x = off[1]; 
+        y = localY; 
+        z = localX
+    
     elseif faceIndex == 4 then
-        x = off[1]; y = localY; z = localX
+        x = off[1]; 
+        y = localY; 
+        z = localX
+    
     elseif faceIndex == 5 then
-        x = localX; y = off[2]; z = localY
+        x = localX; 
+        y = off[2]; 
+        z = localY
+    
     elseif faceIndex == 6 then
-        x = localX; y = off[2]; z = localY
+        x = localX; 
+        y = off[2]; 
+        z = localY
+    
     end
+    
     return x, y, z
 end
 
 
 local function isValidPlacement(board, row, col, value)
     if value == 0 then return true end
+    
+    -- Check row
     for c = 1, 9 do
         if c ~= col and board[row][c].value == value then
             return false, "Number " .. value .. " already exists in this row!"
         end
     end
+    
+    -- Check column
     for r = 1, 9 do
         if r ~= row and board[r][col].value == value then
             return false, "Number " .. value .. " already exists in this column!"
         end
     end
+    
+    -- Check 3x3 box
     local boxStartRow = math.floor((row - 1) / 3) * 3 + 1
     local boxStartCol = math.floor((col - 1) / 3) * 3 + 1
     for r = boxStartRow, boxStartRow + 2 do
