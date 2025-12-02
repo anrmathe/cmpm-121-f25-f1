@@ -6,7 +6,7 @@ local mode3d = nil
 
 function love.load()
     love.window.setTitle("Sudoku - 2D/3D")
-    love.window.setMode(1200, 900)
+    love.window.setMode(900, 700)
 end
 
 function love.draw()

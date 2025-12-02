@@ -63,32 +63,43 @@ local function project3D(x, y, z, width, height)
 end
 
 local function getCellPosition(faceIndex, row, col)
-    local face = faces[faceIndex]
     local localX = (col - 5) * cellSize
     local localY = (row - 5) * cellSize
-    
+
     local x, y, z
-    if faceIndex == 1 then
-        x, y, z = localX, localY, face.offset[3]
-    elseif faceIndex == 2 then
-        x, y, z = -localX, localY, face.offset[3]
-    elseif faceIndex == 3 then
-        x, y, z = face.offset[1], localY, -localX
-    elseif faceIndex == 4 then
-        x, y, z = face.offset[1], localY, localX
-    elseif faceIndex == 5 then
-        x, y, z = localX, face.offset[2], -localY
-    elseif faceIndex == 6 then
-        x, y, z = localX, face.offset[2], localY
+    local off = faces[faceIndex].offset
+
+    if faceIndex == 1 then -- back
+        x = localX
+        y = localY
+        z = off[3]
+    elseif faceIndex == 2 then -- front
+        x = localX
+        y = localY
+        z = off[3]
+    elseif faceIndex == 3 then -- right
+        x = off[1]
+        y = localY
+        z = localX
+    elseif faceIndex == 4 then -- left
+        x = off[1]
+        y = localY
+        z = localX
+    elseif faceIndex == 5 then -- bottom
+        x = localX
+        y = off[2]
+        z = localY
+    elseif faceIndex == 6 then -- top
+        x = localX
+        y = off[2]
+        z = localY
     end
-    
+
     return x, y, z
 end
 
-local function isValidPlacement(faceIndex, row, col, value)
+local function isValidPlacement(board, row, col, value)
     if value == 0 then return true end
-    
-    local board = boards[faceIndex]
     
     -- Check row
     for c = 1, 9 do
@@ -105,7 +116,6 @@ local function isValidPlacement(faceIndex, row, col, value)
     end
     
     -- Check 3x3 box
-    -- Calculate the top-left corner of the 3x3 box this cell belongs to
     local boxStartRow = math.floor((row - 1) / 3) * 3 + 1
     local boxStartCol = math.floor((col - 1) / 3) * 3 + 1
     
@@ -120,27 +130,59 @@ local function isValidPlacement(faceIndex, row, col, value)
     return true
 end
 
+local function shuffle(t)
+    for i = #t, 2, -1 do
+        local j = math.random(i)
+        t[i], t[j] = t[j], t[i]
+    end
+end
+
+local function fillBoard(board)
+    for row = 1, 9 do
+        for col = 1, 9 do
+            if board[row][col].value == 0 then
+                local nums = {1,2,3,4,5,6,7,8,9}
+                shuffle(nums)
+                for _, n in ipairs(nums) do
+                    if isValidPlacement(board, row, col, n) then
+                        board[row][col].value = n
+                        if fillBoard(board) then
+                            return true
+                        else
+                            board[row][col].value = 0
+                        end
+                    end
+                end
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local function removeNumbers(board)
+    for row = 1, 9 do
+        for col = 1, 9 do
+            if math.random() < 0.55 then
+                board[row][col].value = 0
+                board[row][col].fixed = false
+            else
+                board[row][col].fixed = true
+            end
+        end
+    end
+end
+
 local function initBoards()
-    local puzzles = {
-        {{5,3,0,0,7,0,0,0,0},{6,0,0,1,9,5,0,0,0},{0,9,8,0,0,0,0,6,0},{8,0,0,0,6,0,0,0,3},{4,0,0,8,0,3,0,0,1},{7,0,0,0,2,0,0,0,6},{0,6,0,0,0,0,2,8,0},{0,0,0,4,1,9,0,0,5},{0,0,0,0,8,0,0,7,9}},
-        {{0,0,9,0,0,0,8,0,0},{0,5,0,0,3,0,0,7,0},{7,0,0,6,0,2,0,0,4},{0,0,0,0,8,0,0,0,0},{9,0,0,4,0,6,0,0,2},{0,0,0,0,1,0,0,0,0},{3,0,0,9,0,7,0,0,1},{0,4,0,0,5,0,0,8,0},{0,0,7,0,0,0,4,0,0}},
-        {{0,2,0,0,0,0,0,6,0},{0,0,8,0,4,0,1,0,0},{4,0,0,7,0,9,0,0,3},{0,0,0,0,9,0,0,0,0},{8,0,0,2,0,5,0,0,7},{0,0,0,0,3,0,0,0,0},{2,0,0,4,0,8,0,0,9},{0,0,3,0,6,0,5,0,0},{0,7,0,0,0,0,0,1,0}},
-        {{0,0,0,5,0,8,0,0,0},{6,0,0,0,2,0,0,0,4},{0,8,7,0,0,0,5,9,0},{0,0,0,0,0,0,0,0,0},{5,0,0,9,0,1,0,0,3},{0,0,0,0,0,0,0,0,0},{0,2,4,0,0,0,8,5,0},{9,0,0,0,3,0,0,0,2},{0,0,0,7,0,5,0,0,0}},
-        {{8,0,0,0,0,0,0,0,6},{0,3,0,2,0,4,0,9,0},{0,0,5,0,8,0,1,0,0},{0,7,0,0,0,0,0,2,0},{0,0,0,6,0,9,0,0,0},{0,4,0,0,0,0,0,7,0},{0,0,8,0,3,0,4,0,0},{0,9,0,1,0,7,0,5,0},{2,0,0,0,0,0,0,0,8}},
-        {{0,0,0,0,5,0,0,0,0},{0,6,0,3,0,9,0,4,0},{4,0,2,0,0,0,6,0,7},{0,0,0,0,0,0,0,0,0},{3,0,0,7,0,8,0,0,5},{0,0,0,0,0,0,0,0,0},{7,0,5,0,0,0,3,0,1},{0,8,0,6,0,2,0,9,0},{0,0,0,0,4,0,0,0,0}}
-    }
-    
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
-        local puzzle = puzzles[faceIndex]
-        
         for row = 1, 9 do
             boards[faceIndex][row] = {}
             for col = 1, 9 do
                 local x, y, z = getCellPosition(faceIndex, row, col)
                 boards[faceIndex][row][col] = {
-                    value = puzzle[row][col],
-                    fixed = puzzle[row][col] ~= 0,
+                    value = 0,
+                    fixed = false,
                     x = x,
                     y = y,
                     z = z,
@@ -148,6 +190,8 @@ local function initBoards()
                 }
             end
         end
+        fillBoard(boards[faceIndex])
+        removeNumbers(boards[faceIndex])
     end
 end
 
@@ -217,6 +261,10 @@ local function drawCell(cell, row, col, faceIndex, width, height)
         love.graphics.setColor(0.7, 0.8, 1, 1)
     end
     
+    if cell.fixed then
+        love.graphics.setColor(0.8, 0.8, 0.9, 1)
+    end
+    
     love.graphics.polygon('fill', corners[1].x, corners[1].y, corners[2].x, corners[2].y,
                           corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     
@@ -231,32 +279,21 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     love.graphics.setColor(0.1, 0.1, 0.2, 1)
     love.graphics.setLineWidth(3)
     
-    -- Draw thick lines on the RIGHT edge of columns 3 and 6, and LEFT edge of column 1, and RIGHT edge of column 9
     if col == 3 or col == 6 then
         love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
     end
-    
-    -- Draw thick lines on the BOTTOM edge of rows 3 and 6, and TOP edge of row 1, and BOTTOM edge of row 9
     if row == 3 or row == 6 then
         love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     end
-    
-    -- Draw thick line on the left edge (column 1)
     if col == 1 then
         love.graphics.line(corners[4].x, corners[4].y, corners[1].x, corners[1].y)
     end
-    
-    -- Draw thick line on the top edge (row 1)
     if row == 1 then
         love.graphics.line(corners[1].x, corners[1].y, corners[2].x, corners[2].y)
     end
-    
-    -- Draw thick line on the right edge (column 9)
     if col == 9 then
         love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
     end
-    
-    -- Draw thick line on the bottom edge (row 9)
     if row == 9 then
         love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     end
@@ -265,12 +302,15 @@ local function drawCell(cell, row, col, faceIndex, width, height)
         local cx, cy, _ = project3D(cell.x + nx * depth, cell.y + ny * depth, 
                                      cell.z + nz * depth, width, height)
         love.graphics.setColor(0, 0, 0, 1)
-        if cell.fixed then
-            love.graphics.setColor(0.1, 0.1, 0.3, 1)
-        end
         local font = love.graphics.getFont()
         local text = tostring(cell.value)
-        love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
+        if not cell.fixed then
+            -- simple bold effect: draw text twice with a 1px offset
+            love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
+            love.graphics.print(text, cx - font:getWidth(text)/2 + 1, cy - font:getHeight()/2)
+        else
+            love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
+        end
     end
     
     return corners[1].z
@@ -366,12 +406,12 @@ end
 
 function module.keypressed(key)
     if selectedCell then
-        local cell = boards[selectedCell.faceIndex][selectedCell.row][selectedCell.col]
+        local board = boards[selectedCell.faceIndex]
+        local cell = board[selectedCell.row][selectedCell.col]
         if not cell.fixed then
             local num = tonumber(key)
             if num and num >= 1 and num <= 9 then
-                local valid, errMsg = isValidPlacement(selectedCell.faceIndex, 
-                                                       selectedCell.row, selectedCell.col, num)
+                local valid, errMsg = isValidPlacement(board, selectedCell.row, selectedCell.col, num)
                 if valid then
                     cell.value = num
                     errorMessage = ""

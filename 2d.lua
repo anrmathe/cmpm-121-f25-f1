@@ -11,37 +11,78 @@ local fixed = {}
 local errorMessage = ""
 local errorTimer = 0
 
--- Starting puzzle
-local puzzle = {
-    {5,3,0,0,7,0,0,0,0},
-    {6,0,0,1,9,5,0,0,0},
-    {0,9,8,0,0,0,0,6,0},
-    {8,0,0,0,6,0,0,0,3},
-    {4,0,0,8,0,3,0,0,1},
-    {7,0,0,0,2,0,0,0,6},
-    {0,6,0,0,0,0,2,8,0},
-    {0,0,0,4,1,9,0,0,5},
-    {0,0,0,0,8,0,0,7,9}
-}
+-- Center offsets
+local offsetX = 0
+local offsetY = 0
+
+function isSafe(grid, row, col, num)
+    for c=1,9 do
+        if grid[row][c] == num then return false end
+    end
+    for r=1,9 do
+        if grid[r][col] == num then return false end
+    end
+
+    local boxR = math.floor((row-1)/3)*3 + 1
+    local boxC = math.floor((col-1)/3)*3 + 1
+    for r=boxR, boxR+2 do
+        for c=boxC, boxC+2 do
+            if grid[r][c] == num then return false end
+        end
+    end
+    return true
+end
+
+function solveSudoku(grid, row, col)
+    if row == 10 then return true end
+    if col == 10 then return solveSudoku(grid, row+1, 1) end
+
+    if grid[row][col] ~= 0 then
+        return solveSudoku(grid, row, col+1)
+    end
+
+    local nums = {1,2,3,4,5,6,7,8,9}
+    for i = 9, 2, -1 do
+        local j = love.math.random(1, i)
+        nums[i], nums[j] = nums[j], nums[i]
+    end
+
+    for i=1,9 do
+        if isSafe(grid, row, col, nums[i]) then
+            grid[row][col] = nums[i]
+            if solveSudoku(grid, row, col+1) then return true end
+            grid[row][col] = 0
+        end
+    end
+    return false
+end
+
+function makePuzzle(grid, holes)
+    local removed = 0
+    while removed < holes do
+        local r = love.math.random(1,9)
+        local c = love.math.random(1,9)
+        if grid[r][c] ~= 0 then
+            grid[r][c] = 0
+            removed = removed + 1
+        end
+    end
+end
 
 local function isValidPlacement(row, col, value)
     if value == 0 then return true end
     
-    -- Check row
     for c = 1, 9 do
         if c ~= col and grid[row][c] == value then
             return false, "Number " .. value .. " already exists in this row!"
         end
     end
-    
-    -- Check column
     for r = 1, 9 do
         if r ~= row and grid[r][col] == value then
             return false, "Number " .. value .. " already exists in this column!"
         end
     end
     
-    -- Check 3x3 box
     local boxRow = math.floor((row - 1) / 3) * 3
     local boxCol = math.floor((col - 1) / 3) * 3
     
@@ -52,28 +93,43 @@ local function isValidPlacement(row, col, value)
             end
         end
     end
-    
     return true
 end
 
 function module.load()
-    cellSize = 50
+    cellSize = 40
+
     selectedRow = nil
     selectedCol = nil
-    paletteY = cellSize * 9 + 20
     errorMessage = ""
     errorTimer = 0
 
     grid = {}
     fixed = {}
+
     for i = 1, 9 do
         grid[i] = {}
-        fixed[i] = {}
         for j = 1, 9 do
-            grid[i][j] = puzzle[i][j]
-            fixed[i][j] = (puzzle[i][j] ~= 0)
+            grid[i][j] = 0
         end
     end
+
+    solveSudoku(grid,1,1)
+    makePuzzle(grid, love.math.random(40,55))
+
+    for i = 1, 9 do
+        fixed[i] = {}
+        for j = 1, 9 do
+            fixed[i][j] = (grid[i][j] ~= 0)
+        end
+    end
+
+    -- Center offsets calculated AFTER cellSize defined
+    local boardSize = cellSize * 9
+    offsetX = (love.graphics.getWidth() - boardSize) / 2
+    offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
+
+    paletteY = offsetY + boardSize + 20
 end
 
 function module.update(dt)
@@ -87,69 +143,65 @@ end
 
 function module.draw()
     love.graphics.clear(0.68, 0.85, 0.9)
-    
-    -- Draw grid
+
     for i = 1, 9 do
         for j = 1, 9 do
-            -- Cell background
+            local x = offsetX + (j-1)*cellSize
+            local y = offsetY + (i-1)*cellSize
+
             if fixed[i][j] then
                 love.graphics.setColor(0.85, 0.85, 0.9)
             else
                 love.graphics.setColor(1, 1, 1)
             end
-            love.graphics.rectangle("fill", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
+            love.graphics.rectangle("fill", x, y, cellSize, cellSize)
             
-            -- Cell border
             love.graphics.setColor(0.5, 0.5, 0.6)
-            love.graphics.setLineWidth(1)
-            love.graphics.rectangle("line", (j-1)*cellSize, (i-1)*cellSize, cellSize, cellSize)
+            love.graphics.rectangle("line", x, y, cellSize, cellSize)
 
-            -- Number
             if grid[i][j] ~= 0 then
                 if fixed[i][j] then
                     love.graphics.setColor(0.1, 0.1, 0.3)
                 else
                     love.graphics.setColor(0, 0, 0)
                 end
-                love.graphics.print(grid[i][j], (j-1)*cellSize + cellSize/3, (i-1)*cellSize + cellSize/4)
+                love.graphics.print(grid[i][j], x + cellSize/3, y + cellSize/4)
             end
         end
     end
 
-    -- Draw thicker 3x3 lines
     love.graphics.setColor(0.1, 0.1, 0.2)
     love.graphics.setLineWidth(3)
     for i = 0, 3 do
-        love.graphics.line(0, i*cellSize*3, 9*cellSize, i*cellSize*3)
-        love.graphics.line(i*cellSize*3, 0, i*cellSize*3, 9*cellSize)
+        love.graphics.line(offsetX, offsetY + i*cellSize*3, offsetX + cellSize*9, offsetY + i*cellSize*3)
+        love.graphics.line(offsetX + i*cellSize*3, offsetY, offsetX + i*cellSize*3, offsetY + cellSize*9)
     end
     love.graphics.setLineWidth(1)
 
-    -- Draw number palette
     for n = 1, 9 do
+        local px = offsetX + (n-1)*cellSize
         love.graphics.setColor(0.8, 0.8, 0.8)
-        love.graphics.rectangle("fill", (n-1)*cellSize, paletteY, cellSize, cellSize)
+        love.graphics.rectangle("fill", px, paletteY, cellSize, cellSize)
         love.graphics.setColor(0, 0, 0)
-        love.graphics.rectangle("line", (n-1)*cellSize, paletteY, cellSize, cellSize)
-        love.graphics.print(n, (n-1)*cellSize + cellSize/3, paletteY + cellSize/4)
+        love.graphics.rectangle("line", px, paletteY, cellSize, cellSize)
+        love.graphics.print(n, px + cellSize/3, paletteY + cellSize/4)
     end
 
-    -- Draw selection highlight
     if selectedRow and selectedCol then
         love.graphics.setColor(0.7, 0.8, 1, 0.5)
-        love.graphics.rectangle("fill", (selectedCol-1)*cellSize, (selectedRow-1)*cellSize, cellSize, cellSize)
+        local hx = offsetX + (selectedCol-1)*cellSize
+        local hy = offsetY + (selectedRow-1)*cellSize
+        love.graphics.rectangle("fill", hx, hy, cellSize, cellSize)
     end
 
-    -- Instructions
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Click cell then number palette | Or use number keys | Backspace to clear", 10, paletteY + cellSize + 10)
-    love.graphics.print("Press ESC to return to menu", 10, paletteY + cellSize + 30)
+    love.graphics.print("Click cell then number palette | Or use number keys | Backspace to clear", offsetX, paletteY + cellSize + 10)
+    love.graphics.print("Press ESC to return to menu", offsetX, paletteY + cellSize + 30)
     
     if selectedRow and selectedCol then
-        love.graphics.print("Selected: [" .. selectedRow .. "," .. selectedCol .. "]", 10, paletteY + cellSize + 50)
+        love.graphics.print("Selected: [" .. selectedRow .. "," .. selectedCol .. "]", offsetX, paletteY + cellSize + 50)
     end
     
-    -- Error message
     if errorMessage ~= "" then
         local width = love.graphics.getWidth()
         love.graphics.setColor(0.9, 0.1, 0.1, 1)
@@ -163,15 +215,13 @@ end
 
 function module.mousepressed(x, y, button)
     if button == 1 then
-        -- Grid selection
-        if x < cellSize*9 and y < cellSize*9 then
-            selectedCol = math.floor(x / cellSize) + 1
-            selectedRow = math.floor(y / cellSize) + 1
+        if x >= offsetX and x < offsetX + cellSize*9 and y >= offsetY and y < offsetY + cellSize*9 then
+            selectedCol = math.floor((x - offsetX) / cellSize) + 1
+            selectedRow = math.floor((y - offsetY) / cellSize) + 1
         end
 
-        -- Palette selection
         if y >= paletteY and y <= paletteY + cellSize then
-            local numClicked = math.floor(x / cellSize) + 1
+            local numClicked = math.floor((x - offsetX) / cellSize) + 1
             if selectedRow and selectedCol and numClicked >= 1 and numClicked <= 9 then
                 if not fixed[selectedRow][selectedCol] then
                     local valid, errMsg = isValidPlacement(selectedRow, selectedCol, numClicked)
@@ -190,7 +240,6 @@ function module.mousepressed(x, y, button)
 end
 
 function module.mousereleased(x, y, button)
-    -- Not needed for 2D mode
 end
 
 function module.keypressed(key)
@@ -215,7 +264,6 @@ function module.keypressed(key)
         end
     end
     
-    -- Arrow key navigation
     if selectedRow and selectedCol then
         if key == "up" and selectedRow > 1 then
             selectedRow = selectedRow - 1
