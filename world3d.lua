@@ -5,9 +5,9 @@
 local g3d = require "g3d"
 
 -- Load textures
-local benchBaseColor = love.graphics.newImage("assets/OBJ/Textures/bench_basecolor.png")
-local benchNormal = love.graphics.newImage("assets/OBJ/Textures/bench_normal.png")
-local benchRoughness = love.graphics.newImage("assets/OBJ/Textures/bench_roughness.png")
+local benchBaseColor = love.graphics.newImage("assets/textures/bench_basecolor.png")
+local benchNormal = love.graphics.newImage("assets/textures/bench_normal.png")
+local benchRoughness = love.graphics.newImage("assets/textures/bench_roughness.png")
 
 -- Create a custom shader that uses multiple textures
 local multiTextureShader = love.graphics.newShader([[
@@ -28,27 +28,27 @@ local multiTextureShader = love.graphics.newShader([[
 local ground = g3d.newModel("assets/cube.obj", nil, {0, -0.5, 0}, {0, 0, 0}, {50, 0.1, 50})
 
 -- Add leaves on top of ground
-local leaves = g3d.newModel("assets/leaves.obj", "assets/clovers_plants_foliage_gltf/textures/phong2_baseColor.png", {-5, 0, -5}, {0, 0, 0}, 1)
-local leaves2 = g3d.newModel("assets/leaves.obj", "assets/clovers_plants_foliage_gltf/textures/phong2_baseColor.png", {5, 0, -8}, {0, math.pi/3, 0}, 1)
-local leaves3 = g3d.newModel("assets/leaves.obj", "assets/clovers_plants_foliage_gltf/textures/phong2_baseColor.png", {-3, 0, 3}, {0, math.pi/2, 0}, 1)
+local leaves = g3d.newModel("assets/leaves.obj", "assets/textures/phong2_baseColor.png", {-5, 0, -5}, {0, 0, 0}, 1)
+local leaves2 = g3d.newModel("assets/leaves.obj", "assets/textures/phong2_baseColor.png", {5, 0, -8}, {0, math.pi/3, 0}, 1)
+local leaves3 = g3d.newModel("assets/leaves.obj", "assets/textures/phong2_baseColor.png", {-3, 0, 3}, {0, math.pi/2, 0}, 1)
 
 -- Keep the original earth sphere
-local earth = g3d.newModel("assets/sphere.obj", "assets/earth.png", {4, 1, 0})
+local earth = g3d.newModel("assets/sphere.obj", "assets/textures/earth.png", {4, 1, 0})
 
 -- Create trial structure
 local trial = g3d.newModel("assets/trial.obj", nil, {0, 0, -15}, {0, 0, 0}, 3)
 
 -- Create upright bench
-local bench = g3d.newModel("assets/OBJ/bench.obj", benchBaseColor, {-8, 0, -10}, {0, 0, 0}, 1)
+local bench = g3d.newModel("assets/bench.obj", benchBaseColor, {-8, 0, -10}, {0, 0, 0}, 1)
 
 -- Create spheres scattered around
 local spheres = {}
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {-5, 0.5, -8}, {0, 0, 0}, 0.5))
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {5, 0.5, -8}, {0, 0, 0}, 0.5))
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {-3, 0.5, -5}, {0, 0, 0}, 0.4))
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {3, 0.7, -12}, {0, 0, 0}, 0.7))
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {8, 0.5, -5}, {0, 0, 0}, 0.5))
-table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/moon.png", {-10, 0.6, -15}, {0, 0, 0}, 0.6))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {-5, 0.5, -8}, {0, 0, 0}, 0.5))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {5, 0.5, -8}, {0, 0, 0}, 0.5))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {-3, 0.5, -5}, {0, 0, 0}, 0.4))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {3, 0.7, -12}, {0, 0, 0}, 0.7))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {8, 0.5, -5}, {0, 0, 0}, 0.5))
+table.insert(spheres, g3d.newModel("assets/sphere.obj", "assets/textures/moon.png", {-10, 0.6, -15}, {0, 0, 0}, 0.6))
 
 -- Optional: Add a skybox/background
 local background = g3d.newModel("assets/sphere.obj", "assets/starfield.png", nil, nil, 500)
