@@ -11,6 +11,7 @@ local cellSize = 60
 local errorMessage = ""
 local errorTimer = 0
 local cubeSize = 540
+local currentDifficulty = "medium"
 
 local faces = {
     {name = "front", normal = {0, 0, 1}, offset = {0, 0, cubeSize/2}},
@@ -26,18 +27,13 @@ local function multiplyMatrixVector(mat, vec)
     local y = vec.x * mat[5] + vec.y * mat[6] + vec.z * mat[7] + mat[8]
     local z = vec.x * mat[9] + vec.y * mat[10] + vec.z * mat[11] + mat[12]
     local w = vec.x * mat[13] + vec.y * mat[14] + vec.z * mat[15] + mat[16]
-    
-    if w ~= 0 then
-        x, y, z = x/w, y/w, z/w
-    end
-    
+    if w ~= 0 then x, y, z = x/w, y/w, z/w end
     return {x = x, y = y, z = z, w = w}
 end
 
 local function getRotationMatrix(rx, ry)
     local cosX, sinX = math.cos(rx), math.sin(rx)
     local cosY, sinY = math.cos(ry), math.sin(ry)
-    
     return {
         cosY, sinX * sinY, cosX * sinY, 0,
         0, cosX, -sinX, 0,
@@ -49,76 +45,51 @@ end
 local function project3D(x, y, z, width, height)
     local fov = 500
     local distance = 1200
-    
     local mat = getRotationMatrix(rotation.x, rotation.y)
     local rotated = multiplyMatrixVector(mat, {x = x, y = y, z = z})
-    
     rotated.z = rotated.z + distance
-    
     local factor = fov / rotated.z
     local screenX = rotated.x * factor + width / 2
     local screenY = rotated.y * factor + height / 2
-    
     return screenX, screenY, rotated.z
 end
 
 local function getCellPosition(faceIndex, row, col)
     local localX = (col - 5) * cellSize
     local localY = (row - 5) * cellSize
-
     local x, y, z
     local off = faces[faceIndex].offset
-
-    if faceIndex == 1 then -- back
-        x = localX
-        y = localY
-        z = off[3]
-    elseif faceIndex == 2 then -- front
-        x = localX
-        y = localY
-        z = off[3]
-    elseif faceIndex == 3 then -- right
-        x = off[1]
-        y = localY
-        z = localX
-    elseif faceIndex == 4 then -- left
-        x = off[1]
-        y = localY
-        z = localX
-    elseif faceIndex == 5 then -- bottom
-        x = localX
-        y = off[2]
-        z = localY
-    elseif faceIndex == 6 then -- top
-        x = localX
-        y = off[2]
-        z = localY
+    if faceIndex == 1 then
+        x = localX; y = localY; z = off[3]
+    elseif faceIndex == 2 then
+        x = localX; y = localY; z = off[3]
+    elseif faceIndex == 3 then
+        x = off[1]; y = localY; z = localX
+    elseif faceIndex == 4 then
+        x = off[1]; y = localY; z = localX
+    elseif faceIndex == 5 then
+        x = localX; y = off[2]; z = localY
+    elseif faceIndex == 6 then
+        x = localX; y = off[2]; z = localY
     end
-
     return x, y, z
 end
 
+
 local function isValidPlacement(board, row, col, value)
     if value == 0 then return true end
-    
-    -- Check row
     for c = 1, 9 do
         if c ~= col and board[row][c].value == value then
             return false, "Number " .. value .. " already exists in this row!"
         end
     end
-    
-    -- Check column
     for r = 1, 9 do
         if r ~= row and board[r][col].value == value then
             return false, "Number " .. value .. " already exists in this column!"
         end
     end
-    
-    -- Check 3x3 box
     local boxStartRow = math.floor((row - 1) / 3) * 3 + 1
     local boxStartCol = math.floor((col - 1) / 3) * 3 + 1
-    
     for r = boxStartRow, boxStartRow + 2 do
         for c = boxStartCol, boxStartCol + 2 do
             if (r ~= row or c ~= col) and board[r][c].value == value then
@@ -126,7 +97,6 @@ local function isValidPlacement(board, row, col, value)
             end
         end
     end
-    
     return true
 end
 
@@ -146,11 +116,8 @@ local function fillBoard(board)
                 for _, n in ipairs(nums) do
                     if isValidPlacement(board, row, col, n) then
                         board[row][col].value = n
-                        if fillBoard(board) then
-                            return true
-                        else
-                            board[row][col].value = 0
-                        end
+                        if fillBoard(board) then return true end
+                        board[row][col].value = 0
                     end
                 end
                 return false
@@ -161,13 +128,27 @@ local function fillBoard(board)
 end
 
 local function removeNumbers(board)
-    for row = 1, 9 do
-        for col = 1, 9 do
-            if math.random() < 0.55 then
-                board[row][col].value = 0
-                board[row][col].fixed = false
-            else
-                board[row][col].fixed = true
+    local holes = 45
+    if currentDifficulty == "testing" then holes = 2 end
+    if currentDifficulty == "easy" then holes = 25 end
+    if currentDifficulty == "medium" then holes = 45 end
+    if currentDifficulty == "hard" then holes = 60 end
+
+    local removed = 0
+    while removed < holes do
+        local r = math.random(1, 9)
+        local c = math.random(1, 9)
+        if board[r][c].value ~= 0 then
+            board[r][c].value = 0
+            board[r][c].fixed = false
+            removed = removed + 1
+        end
+    end
+
+    for r = 1, 9 do
+        for c = 1, 9 do
+            if board[r][c].value ~= 0 then
+                board[r][c].fixed = true
             end
         end
     end
@@ -183,9 +164,7 @@ local function initBoards()
                 boards[faceIndex][row][col] = {
                     value = 0,
                     fixed = false,
-                    x = x,
-                    y = y,
-                    z = z,
+                    x = x, y = y, z = z,
                     faceIndex = faceIndex
                 }
             end
@@ -195,7 +174,29 @@ local function initBoards()
     end
 end
 
-function module.load()
+local function isFaceSolved(board)
+    for r = 1, 9 do
+        for c = 1, 9 do
+            local v = board[r][c].value
+            if v == 0 or not isValidPlacement(board, r, c, v) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local function isCubeSolved()
+    for face = 1, 6 do
+        if not isFaceSolved(boards[face]) then
+            return false
+        end
+    end
+    return true
+end
+
+function module.load(difficulty)
+    currentDifficulty = difficulty or "medium"
     rotation = {x = 0.3, y = 0.3}
     mouseDown = false
     selectedCell = nil
@@ -204,6 +205,28 @@ function module.load()
     initBoards()
 end
 
+local function isBoardComplete(board)
+    for r = 1, 9 do
+        for c = 1, 9 do
+            local v = board[r][c].value
+            if v == 0 then return false end
+            local ok = isValidPlacement(board, r, c, v)
+            if not ok then return false end
+        end
+    end
+    return true
+end
+
+local function isCubeComplete()
+    for face = 1, 6 do
+        if not isBoardComplete(boards[face]) then
+            return false
+        end
+    end
+    return true
+end
+
+
 function module.update(dt)
     if errorTimer > 0 then
         errorTimer = errorTimer - dt
@@ -211,18 +234,19 @@ function module.update(dt)
             errorMessage = ""
         end
     end
+
+    if isCubeComplete() then
+        return "win"
+    end
 end
 
 local function drawCell(cell, row, col, faceIndex, width, height)
     local corners = {}
     local depth = 5
-    
     local face = faces[faceIndex]
     local nx, ny, nz = face.normal[1], face.normal[2], face.normal[3]
-    
     local offsets = {}
     local halfCell = cellSize / 2
-    
     if math.abs(nz) > 0.5 then
         offsets = {
             {-halfCell, -halfCell, 0}, {halfCell, -halfCell, 0},
@@ -239,46 +263,39 @@ local function drawCell(cell, row, col, faceIndex, width, height)
             {halfCell, 0, halfCell}, {-halfCell, 0, halfCell},
         }
     end
-    
     for i, offset in ipairs(offsets) do
-        local x, y, z = project3D(
-            cell.x + offset[1],
-            cell.y + offset[2],
-            cell.z + offset[3],
-            width, height
-        )
+        local x, y, z = project3D(cell.x + offset[1],
+                                   cell.y + offset[2],
+                                   cell.z + offset[3],
+                                   width, height)
         corners[i] = {x = x, y = y, z = z}
     end
-    
     local mat = getRotationMatrix(rotation.x, rotation.y)
     local rotNormal = multiplyMatrixVector(mat, {x = nx, y = ny, z = nz})
     if rotNormal.z >= 0 then return 0 end
-    
     local brightness = math.abs(rotNormal.z) * 0.3 + 0.7
     love.graphics.setColor(0.9 * brightness, 0.9 * brightness, 0.95 * brightness, 1)
-    if selectedCell and selectedCell.faceIndex == faceIndex and 
+    if selectedCell and selectedCell.faceIndex == faceIndex and
        selectedCell.row == row and selectedCell.col == col then
         love.graphics.setColor(0.7, 0.8, 1, 1)
     end
-    
     if cell.fixed then
         love.graphics.setColor(0.8, 0.8, 0.9, 1)
     end
-    
-    love.graphics.polygon('fill', corners[1].x, corners[1].y, corners[2].x, corners[2].y,
-                          corners[3].x, corners[3].y, corners[4].x, corners[4].y)
-    
+    love.graphics.polygon('fill',
+        corners[1].x, corners[1].y,
+        corners[2].x, corners[2].y,
+        corners[3].x, corners[3].y,
+        corners[4].x, corners[4].y
+    )
     love.graphics.setColor(0.5, 0.5, 0.6, 1)
     love.graphics.setLineWidth(1)
-    
     love.graphics.line(corners[1].x, corners[1].y, corners[2].x, corners[2].y)
     love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
     love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     love.graphics.line(corners[4].x, corners[4].y, corners[1].x, corners[1].y)
-    
     love.graphics.setColor(0.1, 0.1, 0.2, 1)
     love.graphics.setLineWidth(3)
-    
     if col == 3 or col == 6 then
         love.graphics.line(corners[2].x, corners[2].y, corners[3].x, corners[3].y)
     end
@@ -297,29 +314,25 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     if row == 9 then
         love.graphics.line(corners[3].x, corners[3].y, corners[4].x, corners[4].y)
     end
-    
     if cell.value > 0 then
-        local cx, cy, _ = project3D(cell.x + nx * depth, cell.y + ny * depth, 
+        local cx, cy, _ = project3D(cell.x + nx * depth, cell.y + ny * depth,
                                      cell.z + nz * depth, width, height)
         love.graphics.setColor(0, 0, 0, 1)
         local font = love.graphics.getFont()
         local text = tostring(cell.value)
         if not cell.fixed then
-            -- simple bold effect: draw text twice with a 1px offset
             love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
             love.graphics.print(text, cx - font:getWidth(text)/2 + 1, cy - font:getHeight()/2)
         else
             love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
         end
     end
-    
     return corners[1].z
 end
 
 function module.draw()
     local width, height = love.graphics.getDimensions()
     love.graphics.clear(0.68, 0.85, 0.9)
-    
     local cellsWithDepth = {}
     for faceIndex = 1, 6 do
         for row = 1, 9 do
@@ -327,26 +340,22 @@ function module.draw()
                 local cell = boards[faceIndex][row][col]
                 local _, _, z = project3D(cell.x, cell.y, cell.z, width, height)
                 table.insert(cellsWithDepth, {
-                    cell = cell, row = row, col = col, 
+                    cell = cell, row = row, col = col,
                     z = z, faceIndex = faceIndex
                 })
             end
         end
     end
-    
     table.sort(cellsWithDepth, function(a, b) return a.z > b.z end)
-    
     for _, item in ipairs(cellsWithDepth) do
         drawCell(item.cell, item.row, item.col, item.faceIndex, width, height)
     end
-    
     love.graphics.setColor(0, 0, 0, 1)
     love.graphics.print("Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation | ESC for menu", 10, 10)
     if selectedCell then
-        love.graphics.print("Selected: Face " .. faces[selectedCell.faceIndex].name .. 
+        love.graphics.print("Selected: Face " .. faces[selectedCell.faceIndex].name ..
                           " [" .. selectedCell.row .. "," .. selectedCell.col .. "]", 10, 30)
     end
-    
     if errorMessage ~= "" then
         love.graphics.setColor(0.9, 0.1, 0.1, 1)
         local font = love.graphics.getFont()
@@ -361,22 +370,18 @@ function module.mousepressed(x, y, button)
     if button == 1 then
         mouseDown = true
         lastMouseX, lastMouseY = x, y
-        
         local width, height = love.graphics.getDimensions()
         local minDist = math.huge
         local closest = nil
-        
         for faceIndex = 1, 6 do
             for row = 1, 9 do
                 for col = 1, 9 do
                     local cell = boards[faceIndex][row][col]
                     local cx, cy, cz = project3D(cell.x, cell.y, cell.z, width, height)
-                    
                     local face = faces[faceIndex]
                     local nx, ny, nz = face.normal[1], face.normal[2], face.normal[3]
                     local mat = getRotationMatrix(rotation.x, rotation.y)
                     local rotNormal = multiplyMatrixVector(mat, {x = nx, y = ny, z = nz})
-                    
                     if rotNormal.z < 0 then
                         local dist = math.sqrt((x - cx)^2 + (y - cy)^2)
                         if dist < cellSize/2 and cz < minDist then
@@ -387,7 +392,6 @@ function module.mousepressed(x, y, button)
                 end
             end
         end
-        
         selectedCell = closest
     end
 end
@@ -427,7 +431,6 @@ function module.keypressed(key)
             end
         end
     end
-    
     if key == "left" then rotation.y = rotation.y - 0.1 end
     if key == "right" then rotation.y = rotation.y + 0.1 end
     if key == "up" then rotation.x = rotation.x - 0.1 end

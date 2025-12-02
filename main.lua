@@ -64,7 +64,13 @@ function love.update(dt)
             difficultyModule = nil
         end
     elseif mode == "3d" and mode3d then
-        mode3d.update(dt)
+        local result = mode3d.update(dt)
+        if result == "win" then
+            mode = "win"
+            mode2d = nil
+            mode3d = nil
+            difficultyModule = nil
+        end
     end
 end
 
@@ -85,17 +91,23 @@ function love.mousepressed(x, y, button)
         end
 
         if x >= bx + 250 and x <= bx + 250 + bw and y >= by and y <= by + bh then
-            mode = "3d"
-            mode3d = require("3d")
-            mode3d.load()
+            chosenMode = "3d"
+            mode = "difficulty"
+            difficultyModule = require("difficulty")
             return
         end
     elseif mode == "difficulty" then
         difficulty = difficultyModule.mousepressed(x, y)
         if difficulty then
-            mode = "2d"
-            mode2d = require("2d")
-            mode2d.load(difficulty)
+            if chosenMode == "2d" then
+                mode = "2d"
+                mode2d = require("2d")
+                mode2d.load(difficulty)
+            else
+                mode = "3d"
+                mode3d = require("3d")
+                mode3d.load(difficulty)
+            end
         end
     elseif mode == "2d" and mode2d then
         mode2d.mousepressed(x, y, button)
