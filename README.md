@@ -42,27 +42,27 @@ CMPM-121-F25-F1
   - We are currently using [g3d](https://github.com/groverburger/g3d) for the 3D physics as we had mentioned in our F1. 
 
 **The game must allow the player to move between scenes (e.g. rooms)**
-  - The player is able to move between the puzzle and the menu by clicking the ESC key and then clicking the respective button for which type of game they would like to play
+  - The player is able to move between the puzzle and the menu by clicking the ESC key and then clicking the respective button for which type of game they would like to play. The two mode available as of now are the 2D and 3D (cube) mode. Everytime they click ESC and return to the menu, their progress is lost and they return to a different mode. A different scene that was implemented is when the player wins, they are then taken to a win screen. You can access the menu again from this scene by clicking the ESC key. We are currently working on keeping a memory of wins and potentially times as well. 
 
 **The game must allow the player to select specific objects in a scene for interaction (e.g. tapping an item to pick it up or examine it)**
-  - Players are able to click each individual cell (minus the ones that are given for the puzzle) and add in a number or change a number previously added.
+  - Players are able to click each individual cell (minus the ones that are given for the puzzle) and add in a number or change a number previously added. Players can interact with the cube sudoku puzzle the same way and can click and drag, or use the arrow keys, to rotate and move around the cube. 
 
 **The game maintains an inventory system allowing the player to carry objects so that what happens in one scene has an impact on what is possible in another scene.**
   - Still currently working on this.
 
 **The game contains at least one physics-based puzzle that is relevant to the player's progress in the game.**
-  - Still currently working on this.
+  - The physics based puzzle is the cube sudoku. 
 
 **The player can succeed or fail at the physics-based puzzle on the basis of their skill and/or reasoning (rather than luck)**
-  - The sudoku puzzles can only be won through deduction and critical thinking. The only way luck can be on the player's side is if they continuously keep guessing, that would take a really long time, though. 
+  - The sudoku puzzles can only be won through deduction and critical thinking. The only way luck can be on the player's side is if they continuously keep guessing, that would take a really long time, though. Once the sudoku puzzle is finished, the player is taken to a win screen with the time it took for them to complete the puzzle displayed on the screen.
 
 **Via play, the game can reach at least one conclusive ending.**
-  - Still working on this.
+  - As of now, once the player completes the 2d mode of sudoku, they are taken to a win screen with the amount of time spent displayed as well. 
 
 ## Reflection 
 
 **Looking back on how you achieved the F2 requirements, how has your team’s plan changed since your F1 devlog? There’s learning value in you documenting how your team’s thinking has changed over time.**
-  - Reflection here
+  - We wanted to achieve many things during F1, specifically our three different types of sudoku modes. We weren't able to implement the 3D sudoku (3 bpards of 3x3 grids), but we were able to fully implement the 2D and cube mode. We realized that going for three different modes was pretty difficult, especially with the bugs that came with the cube version already, and decided to polish the two modes we had working already instead of aiming for a third version that would've costed us more time to implement/debug that wouldn't have been worth it in the end (considering our schedules + other classes). We were also thinking of implementing items that could lead to solving the puzzle more easily so that it isn't just plain sudoku (this is still in talks, though). 
 
 
 
