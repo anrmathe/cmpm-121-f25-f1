@@ -2,7 +2,7 @@ name: Build LÖVE package
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Build .love package
-      uses: love-actions/love-actions-core@v1
-      with:
-        build-list: |
-          ./assets/
-          ./g3d/
-          ./2d.lua
-          ./3d.lua
-          ./world3d.lua
-          ./difficulty.lua
-          ./win.lua
-          ./main.lua
-        package-path: ./build/sudoku.love
+      - name: Build .love package
+        uses: love-actions/love-actions-core@v1
+        with:
+          build-list: |
+            ./assets/
+            ./g3d/
+            ./2d.lua
+            ./3d.lua
+            ./world3d.lua
+            ./difficulty.lua
+            ./win.lua
+            ./main.lua
+          package-path: ./build/sudoku.love

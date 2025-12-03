@@ -1,0 +1,24 @@
+// added this file so that i could run this on my computer
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "LÖVE 2D (Lua)",
+      "type": "lua",
+      "request": "launch",
+      "program": "C:\\Program Files\\LOVE\\love.exe",
+      "stopOnEntry": false,
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch LÖVE (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "C:\\Program Files\\LOVE\\love.exe",
+      "args": ["${workspaceFolder}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "stopAtEntry": false
+    }
+  ]
+}
