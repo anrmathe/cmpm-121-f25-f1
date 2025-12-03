@@ -16,10 +16,14 @@ local function drawMenu()
     love.graphics.clear(0.2, 0.2, 0.3)
     local width, height = love.graphics.getDimensions()
     love.graphics.setColor(1, 1, 1)
+    local textFont = love.graphics.newFont()
+    local titleFont = love.graphics.newFont(30)
+    love.graphics.setFont(titleFont)
     love.graphics.printf("SUDOKU", 0, height/2 - 150, width, "center")
-    love.graphics.printf("Choose Mode:", 0, height/2 - 80, width, "center")
+    love.graphics.setFont(textFont)
+    love.graphics.printf("Choose Mode:", 0, height/2 - 40, width, "center")
 
-    local bx = width/2 - 200
+    local bx = width/2 - 180
     local by = height/2
     local bw = 150
     local bh = 60
@@ -29,7 +33,7 @@ local function drawMenu()
     love.graphics.setColor(1, 1, 1)
     love.graphics.printf("2D Mode", bx, by + 20, bw, "center")
 
-    local bx2 = width/2 + 50
+    local bx2 = width/2 + 20
     love.graphics.setColor(0.5, 0.3, 0.8)
     love.graphics.rectangle("fill", bx2, by, bw, bh, 10, 10)
     love.graphics.setColor(1, 1, 1)
@@ -78,7 +82,7 @@ function love.mousepressed(x, y, button)
     local width, height = love.graphics.getDimensions()
 
     if mode == nil then
-        local bx = width/2 - 200
+        local bx = width/2 - 180
         local by = height/2
         local bw = 150
         local bh = 60
