@@ -1,4 +1,4 @@
--- written by groverbuger for g3d
+-- modified from groverbuger for g3d
 -- september 2021
 -- MIT license
 
