@@ -224,11 +224,14 @@ function module.draw()
     end
 
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Click cell then number palette | Or use number keys | Backspace to clear", offsetX, paletteY + cellSize + 10)
-    love.graphics.print("Press ESC to return to menu", offsetX, paletteY + cellSize + 30)
+    local mainFont = love.graphics.newFont(20)
+    love.graphics.setFont(mainFont)
+
+    love.graphics.print("Click cell then number palette | Or use number keys | Backspace to clear", offsetX - 170, cellSize + 30)
+    love.graphics.print("Press ESC to return to menu", offsetX + 40, paletteY + cellSize + 15)
     
     if selectedRow and selectedCol then
-        love.graphics.print("Selected: [" .. selectedRow .. "," .. selectedCol .. "]", offsetX, paletteY + cellSize + 50)
+        love.graphics.print("Selected: [" .. selectedRow .. "," .. selectedCol .. "]", offsetX + 110, paletteY + cellSize + 50)
     end
     
     if errorMessage ~= "" then

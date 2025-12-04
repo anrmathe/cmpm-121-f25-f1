@@ -385,7 +385,13 @@ function module.draw()
         drawCell(item.cell, item.row, item.col, item.faceIndex, width, height)
     end
     love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.print("Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation | ESC for menu", 10, 10)
+    local mainFont = love.graphics.newFont(20)
+
+    love.graphics.setFont(mainFont)
+
+    love.graphics.print("Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation", 70, 30)
+    love.graphics.print("Press ESC to return to menu", 300, 650)
+
     if selectedCell then
         love.graphics.print("Selected: Face " .. faces[selectedCell.faceIndex].name ..
                           " [" .. selectedCell.row .. "," .. selectedCell.col .. "]", 10, 30)
