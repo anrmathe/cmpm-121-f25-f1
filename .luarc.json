@@ -1,0 +1,27 @@
+// added this file so that vs code would stop telling me thers a problem
+{
+  "runtime": {
+    "version": "Lua 5.1",
+    "pathStrict": true,
+    "path": ["?.lua", "?/init.lua"]
+  },
+  "diagnostics": {
+    "globals": [
+      "love",
+      "bit",
+      "bit32",
+      "jit",
+      "ffi"
+    ],
+    "disable": [
+      "lowercase-global"
+    ]
+  },
+  "workspace": {
+    "library": [],
+    "ignoreDir": [
+      ".git",
+      "node_modules"
+    ]
+  }
+}
