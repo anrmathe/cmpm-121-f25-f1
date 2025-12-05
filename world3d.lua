@@ -4,7 +4,7 @@ local M = {}
 -- -- ASSETS -- --
 local floorModel = g3d.newModel("assets/cube.obj", nil, {0, -1, 0}, nil, {50, 1, 50})
 local boxModel = g3d.newModel("assets/cube.obj")
-local sphereModel = g3d.newModel("assets/sphere.obj") -- You'll need a sphere.obj file
+local sphereModel = g3d.newModel("assets/sphere.obj")
 
 -- -- STATE -- --
 local mouseLocked = false
@@ -13,6 +13,7 @@ local spheres = {} -- Collectible spheres
 local inventory = 0 -- Count of collected spheres
 local playerHeight = 0.5
 local collectRadius = 2 -- Distance player needs to be to collect
+local playerRadius = 0.5 -- Collision radius for player
 
 -- Camera angles for first-person look
 local yaw = 0
@@ -28,15 +29,21 @@ function M.load()
     yaw = math.pi
     pitch = 0
     
-    -- Generate random boxes
+    -- Generate random boxes (buildings)
     boxes = {}
     for i = 1, 50 do
+        local sx = 0.5
+        local sy = math.random(1, 3) * 0.5
+        local sz = 0.5
+        
         table.insert(boxes, {
             x = math.random(-20, 20),
             y = 0,
             z = math.random(-20, 20),
             r = math.random() * math.pi,
-            sy = math.random(1, 3) * 0.5,
+            sx = sx,
+            sy = sy,
+            sz = sz,
             color = {math.random(), math.random(), math.random()}
         })
     end
@@ -49,7 +56,8 @@ function M.load()
             y = 1, -- Float above ground
             z = math.random(-20, 20),
             collected = false,
-            bobPhase = math.random() * math.pi * 2 -- Random starting bob phase
+            bobPhase = math.random() * math.pi * 2, -- Random starting bob phase
+            glowPhase = math.random() * math.pi * 2 -- Random glow phase
         })
     end
     
@@ -57,6 +65,28 @@ function M.load()
     mouseLocked = false
     love.mouse.setVisible(true)
     love.mouse.setRelativeMode(false)
+end
+
+-- Check if player collides with a box (AABB collision)
+local function checkBoxCollision(newX, newZ, box)
+    -- Box boundaries (assuming boxes are axis-aligned for simplicity)
+    local boxHalfWidth = box.sx
+    local boxHalfDepth = box.sz
+    
+    local boxMinX = box.x - boxHalfWidth
+    local boxMaxX = box.x + boxHalfWidth
+    local boxMinZ = box.z - boxHalfDepth
+    local boxMaxZ = box.z + boxHalfDepth
+    
+    -- Player boundaries
+    local playerMinX = newX - playerRadius
+    local playerMaxX = newX + playerRadius
+    local playerMinZ = newZ - playerRadius
+    local playerMaxZ = newZ + playerRadius
+    
+    -- Check AABB collision
+    return playerMaxX > boxMinX and playerMinX < boxMaxX and
+           playerMaxZ > boxMinZ and playerMinZ < boxMaxZ
 end
 
 function M.update(dt)
@@ -76,22 +106,72 @@ function M.update(dt)
             -math.sin(yaw)
         }
         
-        -- WASD movement
+        -- Store current position
+        local oldX = g3d.camera.position[1]
+        local oldZ = g3d.camera.position[3]
+        local newX = oldX
+        local newZ = oldZ
+        
+        -- WASD movement (calculate new position)
         if love.keyboard.isDown('w') then
-            g3d.camera.position[1] = g3d.camera.position[1] + forward[1] * moveSpeed
-            g3d.camera.position[3] = g3d.camera.position[3] + forward[3] * moveSpeed
+            newX = newX + forward[1] * moveSpeed
+            newZ = newZ + forward[3] * moveSpeed
         end
         if love.keyboard.isDown('s') then
-            g3d.camera.position[1] = g3d.camera.position[1] - forward[1] * moveSpeed
-            g3d.camera.position[3] = g3d.camera.position[3] - forward[3] * moveSpeed
+            newX = newX - forward[1] * moveSpeed
+            newZ = newZ - forward[3] * moveSpeed
         end
         if love.keyboard.isDown('a') then
-            g3d.camera.position[1] = g3d.camera.position[1] - right[1] * moveSpeed
-            g3d.camera.position[3] = g3d.camera.position[3] - right[3] * moveSpeed
+            newX = newX - right[1] * moveSpeed
+            newZ = newZ - right[3] * moveSpeed
         end
         if love.keyboard.isDown('d') then
-            g3d.camera.position[1] = g3d.camera.position[1] + right[1] * moveSpeed
-            g3d.camera.position[3] = g3d.camera.position[3] + right[3] * moveSpeed
+            newX = newX + right[1] * moveSpeed
+            newZ = newZ + right[3] * moveSpeed
+        end
+        
+        -- Check collision with all boxes
+        local collisionDetected = false
+        for _, box in ipairs(boxes) do
+            if checkBoxCollision(newX, newZ, box) then
+                collisionDetected = true
+                break
+            end
+        end
+        
+        -- Only update position if no collision
+        if not collisionDetected then
+            g3d.camera.position[1] = newX
+            g3d.camera.position[3] = newZ
+        else
+            -- Try sliding along walls (separate X and Z movement)
+            -- Try X movement only
+            if not checkBoxCollision(newX, oldZ, boxes[1]) then
+                local canMoveX = true
+                for _, box in ipairs(boxes) do
+                    if checkBoxCollision(newX, oldZ, box) then
+                        canMoveX = false
+                        break
+                    end
+                end
+                if canMoveX then
+                    g3d.camera.position[1] = newX
+                end
+            end
+            
+            -- Try Z movement only
+            if not checkBoxCollision(oldX, newZ, boxes[1]) then
+                local canMoveZ = true
+                for _, box in ipairs(boxes) do
+                    if checkBoxCollision(oldX, newZ, box) then
+                        canMoveZ = false
+                        break
+                    end
+                end
+                if canMoveZ then
+                    g3d.camera.position[3] = newZ
+                end
+            end
         end
         
         -- Keep player at constant height
@@ -114,6 +194,9 @@ function M.update(dt)
             -- Bob up and down
             sphere.bobPhase = sphere.bobPhase + dt * 2
             
+            -- Pulsing glow effect
+            sphere.glowPhase = sphere.glowPhase + dt * 3
+            
             -- Check if player is close enough to collect
             local dx = g3d.camera.position[1] - sphere.x
             local dz = g3d.camera.position[3] - sphere.z
@@ -134,24 +217,46 @@ function M.draw()
     love.graphics.setColor(0.1, 0.6, 0.2)
     floorModel:draw()
 
-    -- Draw Boxes
+    -- Draw Boxes (Buildings)
     for _, box in ipairs(boxes) do
         love.graphics.setColor(box.color)
-        boxModel:setTransform({box.x, box.y, box.z}, {0, box.r, 0}, {0.5, box.sy, 0.5})
+        boxModel:setTransform({box.x, box.y, box.z}, {0, box.r, 0}, {box.sx, box.sy, box.sz})
         boxModel:draw()
     end
     
-    -- Draw Collectible Spheres
-    love.graphics.setColor(1, 0.4, 0.8) -- Pink color
+    -- Draw Collectible Spheres with glow effect
     for _, sphere in ipairs(spheres) do
         if not sphere.collected then
             -- Calculate bobbing Y position
-            local bobY = sphere.y + math.sin(sphere.bobPhase) * 0.2
+            local bobY = sphere.y + math.sin(sphere.bobPhase) * 0.15
             
+            -- Calculate pulsing glow intensity (0.7 to 1.0)
+            local glowIntensity = 0.7 + math.sin(sphere.glowPhase) * 0.3
+            
+            -- Draw outer glow layer (larger, more transparent)
+            love.graphics.setColor(1, 0.3, 0.8, 0.3 * glowIntensity)
             sphereModel:setTransform(
                 {sphere.x, bobY, sphere.z}, 
-                {0, sphere.bobPhase, 0}, -- Rotate for visual effect
-                {0.3, 0.3, 0.3} -- Size
+                {0, sphere.bobPhase, 0},
+                {0.25, 0.25, 0.25} -- Outer glow size
+            )
+            sphereModel:draw()
+            
+            -- Draw middle glow layer
+            love.graphics.setColor(1, 0.4, 0.85, 0.6 * glowIntensity)
+            sphereModel:setTransform(
+                {sphere.x, bobY, sphere.z}, 
+                {0, sphere.bobPhase, 0},
+                {0.18, 0.18, 0.18}
+            )
+            sphereModel:draw()
+            
+            -- Draw core (bright pink, fully opaque)
+            love.graphics.setColor(1, 0.5, 0.9, glowIntensity)
+            sphereModel:setTransform(
+                {sphere.x, bobY, sphere.z}, 
+                {0, sphere.bobPhase, 0},
+                {0.12, 0.12, 0.12} -- Core size (smaller)
             )
             sphereModel:draw()
         end
@@ -170,7 +275,7 @@ function M.draw()
     
     love.graphics.print(string.format("Position: %.1f, %.1f, %.1f", 
         g3d.camera.position[1], g3d.camera.position[2], g3d.camera.position[3]), 10, 30)
-    love.graphics.print(string.format("Inventory: %d spheres collected", inventory), 10, 50)
+    love.graphics.print(string.format("Inventory: %d / 20 spheres", inventory), 10, 50)
         
     love.graphics.pop()
 end
