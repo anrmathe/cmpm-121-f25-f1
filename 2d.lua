@@ -309,4 +309,14 @@ function module.keypressed(key)
     end
 end
 
+-- test helpers
+module._test = {
+    getGrid = function() return grid end,
+    getFixed = function() return fixed end,
+    solveSudoku = solveSudoku,
+    makePuzzle = makePuzzle,
+    isValidPlacement = isValidPlacement,
+    isPuzzleComplete = isPuzzleComplete,
+}
+
 return module

@@ -477,4 +477,16 @@ function module.keypressed(key)
     if key == "down" then rotation.x = rotation.x + 0.1 end
 end
 
+-- test helpers
+module._test = {
+    getBoards = function() return boards end,
+    initBoardsForTest = function(diff)
+        currentDifficulty = diff or "medium"
+        initBoards()
+    end,
+    isValidPlacement = isValidPlacement,
+    isBoardComplete = isBoardComplete,
+    isCubeComplete = isCubeComplete,
+}
+
 return module
