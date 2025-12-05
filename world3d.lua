@@ -3,12 +3,16 @@ local M = {}
 
 -- -- ASSETS -- --
 local floorModel = g3d.newModel("assets/cube.obj", nil, {0, -1, 0}, nil, {50, 1, 50})
-local boxModel = g3d.newModel("assets/cube.obj") 
+local boxModel = g3d.newModel("assets/cube.obj")
+local sphereModel = g3d.newModel("assets/sphere.obj") -- You'll need a sphere.obj file
 
 -- -- STATE -- --
 local mouseLocked = false
 local boxes = {}
+local spheres = {} -- Collectible spheres
+local inventory = 0 -- Count of collected spheres
 local playerHeight = 0.5
+local collectRadius = 2 -- Distance player needs to be to collect
 
 -- Camera angles for first-person look
 local yaw = 0
@@ -36,7 +40,20 @@ function M.load()
             color = {math.random(), math.random(), math.random()}
         })
     end
-
+    
+    -- Generate collectible pink spheres
+    spheres = {}
+    for i = 1, 20 do
+        table.insert(spheres, {
+            x = math.random(-20, 20),
+            y = 1, -- Float above ground
+            z = math.random(-20, 20),
+            collected = false,
+            bobPhase = math.random() * math.pi * 2 -- Random starting bob phase
+        })
+    end
+    
+    inventory = 0
     mouseLocked = false
     love.mouse.setVisible(true)
     love.mouse.setRelativeMode(false)
@@ -90,6 +107,24 @@ function M.update(dt)
     -- Make sure g3d updates its matrices
     g3d.camera.updateProjectionMatrix()
     g3d.camera.updateViewMatrix()
+    
+    -- Update spheres (bobbing animation) and check for collection
+    for _, sphere in ipairs(spheres) do
+        if not sphere.collected then
+            -- Bob up and down
+            sphere.bobPhase = sphere.bobPhase + dt * 2
+            
+            -- Check if player is close enough to collect
+            local dx = g3d.camera.position[1] - sphere.x
+            local dz = g3d.camera.position[3] - sphere.z
+            local distance = math.sqrt(dx * dx + dz * dz)
+            
+            if distance < collectRadius then
+                sphere.collected = true
+                inventory = inventory + 1
+            end
+        end
+    end
 end
 
 function M.draw()
@@ -106,6 +141,22 @@ function M.draw()
         boxModel:draw()
     end
     
+    -- Draw Collectible Spheres
+    love.graphics.setColor(1, 0.4, 0.8) -- Pink color
+    for _, sphere in ipairs(spheres) do
+        if not sphere.collected then
+            -- Calculate bobbing Y position
+            local bobY = sphere.y + math.sin(sphere.bobPhase) * 0.2
+            
+            sphereModel:setTransform(
+                {sphere.x, bobY, sphere.z}, 
+                {0, sphere.bobPhase, 0}, -- Rotate for visual effect
+                {0.3, 0.3, 0.3} -- Size
+            )
+            sphereModel:draw()
+        end
+    end
+    
     -- HUD
     love.graphics.push("all")
     love.graphics.setDepthMode()
@@ -119,7 +170,7 @@ function M.draw()
     
     love.graphics.print(string.format("Position: %.1f, %.1f, %.1f", 
         g3d.camera.position[1], g3d.camera.position[2], g3d.camera.position[3]), 10, 30)
-    love.graphics.print(string.format("Yaw: %.2f | Pitch: %.2f", yaw, pitch), 10, 50)
+    love.graphics.print(string.format("Inventory: %d spheres collected", inventory), 10, 50)
         
     love.graphics.pop()
 end
