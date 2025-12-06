@@ -34,17 +34,29 @@ function module.draw()
     }
 
     for _, b in ipairs(module.buttons) do
-        if b.label == "testing" then
-            theme.setPaletteColor("primary")
-        elseif b.label == "easy" then
-            love.graphics.setColor(0.3, 0.8, 0.4)
-        elseif b.label == "medium" then
-            love.graphics.setColor(0.8, 0.7, 0.3)
-        elseif b.label == "hard" then
-            love.graphics.setColor(0.8, 0.3, 0.3)
+        -- Set button background color based on palette
+        if b.difficulty == "testing" then
+            love.graphics.setColor(p.primary[1], p.primary[2], p.primary[3])
+        elseif b.difficulty == "easy" then
+            love.graphics.setColor(p.secondary[1], p.secondary[2], p.secondary[3])
+        elseif b.difficulty == "medium" then
+            love.graphics.setColor(p.accent[1], p.accent[2], p.accent[3])
+        elseif b.difficulty == "hard" then
+            -- For hard, use a warning color from palette if available, or a fallback red
+            if p.warning then
+                love.graphics.setColor(p.warning[1], p.warning[2], p.warning[3])
+            else
+                love.graphics.setColor(0.8, 0.3, 0.3)  -- Fallback red
+            end
         end
+        
+        -- Draw button background
         love.graphics.rectangle("fill", b.x, b.y, bw, bh, 10, 10)
+        
+        -- Set text color (will be white in dark mode, black in light mode)
         theme.setColor("text")
+        
+        -- Draw button text
         love.graphics.printf(locale.text(b.label), b.x, b.y + 20, bw, "center")
     end
     
