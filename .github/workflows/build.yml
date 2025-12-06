@@ -17,12 +17,8 @@ jobs:
         uses: love-actions/love-actions-core@v1
         with:
           build-list: |
-            ./assets/
-            ./g3d/
-            ./2d.lua
-            ./3d.lua
-            ./world3d.lua
-            ./difficulty.lua
-            ./win.lua
-            ./main.lua
+            .
+            !tests/
+            !.vscode/
+            !.github/
           package-path: ./build/sudoku.love
