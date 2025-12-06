@@ -46,6 +46,7 @@ locale.languages = {
         hud_2d_instructions   = "Click cell then number palette | Or use number keys | Backspace to clear",
         hud_2d_esc            = "Press ESC to return to menu",
         hud_2d_selected       = "Selected: [%d,%d]",
+        hud_2d_undo          = "Press U to undo | Press R to redo",
 
         hud_3d_instructions   = "Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation",
         hud_3d_esc            = "Press ESC to return to menu",
@@ -101,6 +102,7 @@ locale.languages = {
         hud_2d_instructions   = "点击格子再选数字 | 或使用数字键 | Backspace 删除",
         hud_2d_esc            = "按 ESC 返回菜单",
         hud_2d_selected       = "已选：[%d,%d]",
+        hud_2d_undo          = "按 U 撤销 | 按 R 重做",
 
         hud_3d_instructions   = "拖动旋转 | 点击格子 | 数字键填写 | 方向键微调",
         hud_3d_esc            = "按 ESC 返回菜单",
@@ -156,6 +158,7 @@ locale.languages = {
         hud_2d_instructions   = "انقر على الخانة ثم رقم | أو استخدم أزرار الأرقام | Backspace للحذف",
         hud_2d_esc            = "اضغط ESC للعودة إلى القائمة",
         hud_2d_selected       = "المحدد: [%d,%d]",
+        hud_2d_undo          = "اضغط U للتراجع | اضغط R للإعادة",
 
         hud_3d_instructions   = "اسحب للدوران | انقر على الخانات | أزرار الأرقام للتعبئة | الأسهم لتدوير دقيق",
         hud_3d_esc            = "اضغط ESC للعودة إلى القائمة",

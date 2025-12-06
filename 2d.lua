@@ -323,9 +323,11 @@ function module.draw()
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     theme.setColor("text")
+    locale.applyFont("small")
     
     local undoText = "Press U to undo | Press R to redo"
-    local textWidth = mainFont:getWidth(undoText)
+    local font = love.graphics.getFont()
+    local textWidth = font:getWidth(undoText)
     love.graphics.print(undoText, screenWidth - textWidth - 20, screenHeight - 40)
 end
 
