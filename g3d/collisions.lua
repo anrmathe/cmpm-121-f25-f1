@@ -88,9 +88,12 @@ local function triangleRay(
     if thisLength >= tiny and (not finalLength or thisLength < finalLength) then
         --local norm_x, norm_y, norm_z = vectorCrossProduct(e11,e12,e13, e21,e22,e23)
 
+<<<<<<< HEAD
     -- if thisLength >= tiny and (not finalLength or thisLength < finalLength) then
         --local norm_x, norm_y, norm_z = vectorCrossProduct(e11,e12,e13, e21,e22,e23)
     if thisLength >= tiny then
+=======
+>>>>>>> 4cb2587e9cc61cda2cca45e863082d5126474318
         return thisLength, src_x + dir_x*thisLength, src_y + dir_y*thisLength, src_z + dir_z*thisLength, n_x,n_y,n_z
     end
 end
