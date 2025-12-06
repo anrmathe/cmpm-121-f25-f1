@@ -6,10 +6,7 @@ local vectors = require(g3d.path .. ".vectors")
 local vectorCrossProduct = vectors.crossProduct
 local vectorDotProduct = vectors.dotProduct
 local vectorNormalize = vectors.normalize
-<<<<<<< HEAD
 local vectorMagnitude = vectors.magnitude
-=======
->>>>>>> 4cb2587e9cc61cda2cca45e863082d5126474318
 
 ----------------------------------------------------------------------------------------------------
 -- matrix class
