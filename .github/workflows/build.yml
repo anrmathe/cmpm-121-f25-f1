@@ -13,12 +13,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Create build directory
+        run: mkdir -p build
+
       - name: Build .love package
         uses: love-actions/love-actions-core@v1
         with:
           build-list: |
-            .
-            !tests/
-            !.vscode/
-            !.github/
+            main.lua
+            2d.lua
+            3d.lua
+            world3d.lua
+            difficulty.lua
+            win.lua
+            assets/
+            g3d/
           package-path: ./build/sudoku.love
