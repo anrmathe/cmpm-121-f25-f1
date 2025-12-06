@@ -1,6 +1,7 @@
--- 2d.lua - 2D Sudoku Mode
+-- 2d.lua - 2D Sudoku Mode with Theme Support
 
 local module = {}
+local theme = require("theme")
 
 local cellSize = 50
 local selectedRow = nil
@@ -36,6 +37,7 @@ function isSafe(grid, row, col, num)
 
     return true
 end
+
 function solveSudoku(grid, row, col)
     if row == 10 then return true end
     if col == 10 then return solveSudoku(grid, row+1, 1) end
@@ -171,7 +173,11 @@ function module.update(dt)
 end
 
 function module.draw()
-    love.graphics.clear(0.68, 0.85, 0.9)
+    local t = theme.getTheme()
+    local p = theme.getPalette()
+    
+    love.graphics.setColor(t.background)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
     for i = 1, 9 do
         for j = 1, 9 do
@@ -179,27 +185,27 @@ function module.draw()
             local y = offsetY + (i-1)*cellSize
 
             if fixed[i][j] then
-                love.graphics.setColor(0.85, 0.85, 0.9)
+                love.graphics.setColor(t.cellFixed)
             else
-                love.graphics.setColor(1, 1, 1)
+                love.graphics.setColor(t.cellFill)
             end
             love.graphics.rectangle("fill", x, y, cellSize, cellSize)
             
-            love.graphics.setColor(0.5, 0.5, 0.6)
+            love.graphics.setColor(t.cellBorder)
             love.graphics.rectangle("line", x, y, cellSize, cellSize)
 
             if grid[i][j] ~= 0 then
                 if fixed[i][j] then
-                    love.graphics.setColor(0.1, 0.1, 0.3)
+                    love.graphics.setColor(t.textFixed)
                 else
-                    love.graphics.setColor(0, 0, 0)
+                    love.graphics.setColor(t.text)
                 end
                 love.graphics.print(grid[i][j], x + cellSize/3, y + cellSize/4)
             end
         end
     end
 
-    love.graphics.setColor(0.1, 0.1, 0.2)
+    love.graphics.setColor(t.gridLine)
     love.graphics.setLineWidth(3)
     for i = 0, 3 do
         love.graphics.line(offsetX, offsetY + i*cellSize*3, offsetX + cellSize*9, offsetY + i*cellSize*3)
@@ -209,21 +215,21 @@ function module.draw()
 
     for n = 1, 9 do
         local px = offsetX + (n-1)*cellSize
-        love.graphics.setColor(0.8, 0.8, 0.8)
+        theme.setPaletteColor("button", 0.7)
         love.graphics.rectangle("fill", px, paletteY, cellSize, cellSize)
-        love.graphics.setColor(0, 0, 0)
+        theme.setColor("text")
         love.graphics.rectangle("line", px, paletteY, cellSize, cellSize)
         love.graphics.print(n, px + cellSize/3, paletteY + cellSize/4)
     end
 
     if selectedRow and selectedCol then
-        love.graphics.setColor(0.7, 0.8, 1, 0.5)
+        love.graphics.setColor(p.highlight)
         local hx = offsetX + (selectedCol-1)*cellSize
         local hy = offsetY + (selectedRow-1)*cellSize
         love.graphics.rectangle("fill", hx, hy, cellSize, cellSize)
     end
 
-    love.graphics.setColor(0, 0, 0)
+    theme.setColor("text")
     local mainFont = love.graphics.newFont(20)
     love.graphics.setFont(mainFont)
 

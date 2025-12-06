@@ -1,13 +1,24 @@
--- difficulty.lua - difficulty switcher for 2D Sudoku game
+-- difficulty.lua - difficulty switcher with theme support
 
 local module = {}
+local theme = require("theme")
 
 function module.draw()
-    love.graphics.clear(0.2, 0.2, 0.3)
+    local t = theme.getTheme()
+    local p = theme.getPalette()
+    
+    love.graphics.setColor(t.menuBackground)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
     local width, height = love.graphics.getDimensions()
 
-    love.graphics.setColor(1, 1, 1)
+    theme.setColor("text")
+    local titleFont = love.graphics.newFont(30)
+    love.graphics.setFont(titleFont)
     love.graphics.printf("SELECT DIFFICULTY", 0, height/2 - 150, width, "center")
+
+    local textFont = love.graphics.newFont(20)
+    love.graphics.setFont(textFont)
 
     local bw = 150
     local bh = 60
@@ -25,7 +36,7 @@ function module.draw()
 
     for _, b in ipairs(module.buttons) do
         if b.label == "Testing" then
-            love.graphics.setColor(0.3, 0.6, 0.8)
+            theme.setPaletteColor("primary")
         elseif b.label == "Easy" then
             love.graphics.setColor(0.3, 0.8, 0.4)
         elseif b.label == "Medium" then
@@ -34,11 +45,13 @@ function module.draw()
             love.graphics.setColor(0.8, 0.3, 0.3)
         end
         love.graphics.rectangle("fill", b.x, b.y, bw, bh, 10, 10)
-        love.graphics.setColor(1, 1, 1)
+        theme.setColor("text")
         love.graphics.printf(b.label, b.x, b.y + 20, bw, "center")
     end
     
-    love.graphics.setColor(0.7, 0.7, 0.7)
+    theme.setColor("textSecondary")
+    local smallFont = love.graphics.newFont(14)
+    love.graphics.setFont(smallFont)
     love.graphics.printf("Press ESC in game to return to menu", 0, height - 50, width, "center")
 end
 

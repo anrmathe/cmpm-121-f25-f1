@@ -1,13 +1,14 @@
--- main.lua - Mode Switcher for 2D/3D Sudoku and World 3D
+-- main.lua - Mode Switcher for 2D/3D Sudoku and World 3D with Settings
 
 local mode = nil
 local mode2d = nil
 local mode3d = nil
-local modeWorld = nil -- Variable for the 3D world mode
-
+local modeWorld = nil
+local settingsModule = nil
 local difficultyModule = nil
 local chosenMode = nil
 local difficulty = nil
+local theme = require("theme")
 
 function love.load()
     love.window.setTitle("Sudoku - 2D/3D & World")
@@ -15,9 +16,15 @@ function love.load()
 end
 
 local function drawMenu()
-    love.graphics.clear(0.2, 0.2, 0.3)
+    local t = theme.getTheme()
+    local p = theme.getPalette()
+    
+    love.graphics.setColor(t.menuBackground)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    
     local width, height = love.graphics.getDimensions()
-    love.graphics.setColor(1, 1, 1)
+    theme.setColor("text")
+    
     local textFont = love.graphics.newFont()
     local titleFont = love.graphics.newFont(30)
     love.graphics.setFont(titleFont)
@@ -37,32 +44,43 @@ local function drawMenu()
     
     -- Button 1: 2D
     local bx1 = startX
-    love.graphics.setColor(0.3, 0.5, 0.8)
+    theme.setPaletteColor("primary")
     love.graphics.rectangle("fill", bx1, by, bw, bh, 10, 10)
-    love.graphics.setColor(1, 1, 1)
+    theme.setColor("text")
     love.graphics.printf("2D Sudoku", bx1, by + 20, bw, "center")
 
     -- Button 2: 3D
     local bx2 = bx1 + bw + spacing
-    love.graphics.setColor(0.5, 0.3, 0.8)
+    theme.setPaletteColor("secondary")
     love.graphics.rectangle("fill", bx2, by, bw, bh, 10, 10)
-    love.graphics.setColor(1, 1, 1)
+    theme.setColor("text")
     love.graphics.printf("3D Sudoku", bx2, by + 20, bw, "center")
 
     -- Button 3: World
     local bx3 = bx2 + bw + spacing
-    love.graphics.setColor(0.2, 0.6, 0.4)
+    theme.setPaletteColor("accent")
     love.graphics.rectangle("fill", bx3, by, bw, bh, 10, 10)
-    love.graphics.setColor(1, 1, 1)
+    theme.setColor("text")
     love.graphics.printf("World 3D", bx3, by + 20, bw, "center")
 
-    love.graphics.setColor(0.7, 0.7, 0.7)
+    -- Settings button
+    local settingsY = by + bh + 30
+    local settingsW = 200
+    local settingsX = width/2 - settingsW/2
+    love.graphics.setColor(0.6, 0.6, 0.6)
+    love.graphics.rectangle("fill", settingsX, settingsY, settingsW, 50, 10, 10)
+    theme.setColor("text")
+    love.graphics.printf("⚙ Settings", settingsX, settingsY + 15, settingsW, "center")
+
+    theme.setColor("textSecondary")
     love.graphics.printf("Press ESC to return to menu", 0, height - 50, width, "center")
 end
 
 function love.draw()
     if mode == nil then
         drawMenu()
+    elseif mode == "settings" then
+        if settingsModule then settingsModule.draw() end
     elseif mode == "difficulty" then
         if difficultyModule then difficultyModule.draw() end
     elseif mode == "2d" then
@@ -70,7 +88,6 @@ function love.draw()
     elseif mode == "3d" then
         if mode3d then mode3d.draw() end
     elseif mode == "world" then
-        -- Ensures world3d.draw is executed every frame
         if modeWorld then modeWorld.draw() end
     elseif mode == "win" then
         local winScreen = require("win")
@@ -92,7 +109,6 @@ function love.update(dt)
             mode3d = nil
         end
     elseif mode == "world" and modeWorld then
-        -- Ensures world3d.update is executed every frame
         modeWorld.update(dt)
     end
 end
@@ -113,7 +129,7 @@ function love.mousepressed(x, y, button)
         local bx2 = bx1 + bw + spacing
         local bx3 = bx2 + bw + spacing
 
-        -- Check 2D Button...
+        -- Check 2D Button
         if x >= bx1 and x <= bx1 + bw and y >= by and y <= by + bh then
             chosenMode = "2d"
             mode = "difficulty"
@@ -121,7 +137,7 @@ function love.mousepressed(x, y, button)
             return
         end
 
-        -- Check 3D Button...
+        -- Check 3D Button
         if x >= bx2 and x <= bx2 + bw and y >= by and y <= by + bh then
             chosenMode = "3d"
             mode = "difficulty"
@@ -137,6 +153,22 @@ function love.mousepressed(x, y, button)
             return
         end
 
+        -- Check Settings Button
+        local settingsY = by + bh + 30
+        local settingsW = 200
+        local settingsX = width/2 - settingsW/2
+        if x >= settingsX and x <= settingsX + settingsW and y >= settingsY and y <= settingsY + 50 then
+            mode = "settings"
+            settingsModule = require("settings")
+            return
+        end
+
+    elseif mode == "settings" then
+        local result = settingsModule.mousepressed(x, y)
+        if result == "back" then
+            mode = nil
+            settingsModule = nil
+        end
     elseif mode == "difficulty" then
         difficulty = difficultyModule.mousepressed(x, y)
         if difficulty then
@@ -182,7 +214,7 @@ function love.keypressed(key)
         if mode ~= nil then
             -- Clean up logic when returning to menu
             if mode == "world" and modeWorld then
-                modeWorld.exit() -- Release mouse lock
+                modeWorld.exit()
             end
             
             mode = nil
@@ -192,6 +224,7 @@ function love.keypressed(key)
             mode3d = nil
             modeWorld = nil
             difficultyModule = nil
+            settingsModule = nil
         else
             love.event.quit()
         end
