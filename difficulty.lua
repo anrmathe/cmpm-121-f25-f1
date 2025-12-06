@@ -14,14 +14,10 @@ function module.draw()
     local width, height = love.graphics.getDimensions()
 
     theme.setColor("text")
-    local titleFont = love.graphics.newFont(30)
-    love.graphics.setFont(titleFont)
+    locale.applyFont("title")
     love.graphics.printf(locale.text("difficulty_title"), 0, height/2 - 150, width, "center")
 
     locale.applyFont("text")
-
-    local textFont = love.graphics.newFont(20)
-    love.graphics.setFont(textFont)
 
     local bw = 150
     local bh = 60
@@ -53,8 +49,7 @@ function module.draw()
     end
     
     theme.setColor("textSecondary")
-    local smallFont = love.graphics.newFont(14)
-    love.graphics.setFont(smallFont)
+    locale.applyFont("small")
     love.graphics.printf(locale.text("difficulty_esc_hint"), 0, height - 50, width, "center")
 end
 

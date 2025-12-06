@@ -14,7 +14,7 @@ locale.languages = {
         menu_mode_2d          = "2D Sudoku",
         menu_mode_3d          = "3D Sudoku",
         menu_mode_world       = "World 3D",
-        menu_settings         = "⚙ Settings",
+        menu_settings         = "Settings",
         menu_esc_hint         = "Press ESC to return to menu",
 
         settings_title            = "SETTINGS",
@@ -69,7 +69,7 @@ locale.languages = {
         menu_mode_2d          = "2D 数独",
         menu_mode_3d          = "3D 数独",
         menu_mode_world       = "3D 世界",
-        menu_settings         = "⚙ 设置",
+        menu_settings         = "设置",
         menu_esc_hint         = "按 ESC 返回菜单",
 
         settings_title            = "设置",
@@ -124,7 +124,7 @@ locale.languages = {
         menu_mode_2d          = "سودوكو ثنائي الأبعاد",
         menu_mode_3d          = "سودوكو ثلاثي الأبعاد",
         menu_mode_world       = "العالم ثلاثي الأبعاد",
-        menu_settings         = "⚙ الإعدادات",
+        menu_settings         = "الإعدادات",
         menu_esc_hint         = "اضغط ESC للعودة إلى القائمة",
 
         settings_title            = "الإعدادات",

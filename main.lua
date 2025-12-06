@@ -77,8 +77,10 @@ local function drawMenu()
     local textFont = love.graphics.newFont()
     local titleFont = love.graphics.newFont(30)
     love.graphics.setFont(titleFont)
+    locale.applyFont("title")
     love.graphics.printf(locale.text("menu_title"), 0, height/2 - 150, width, "center")
     love.graphics.setFont(textFont)
+    locale.applyFont("text")
     love.graphics.printf(locale.text("menu_choose_mode"), 0, height/2 - 40, width, "center")
 
     -- Button Dimensions
@@ -119,9 +121,11 @@ local function drawMenu()
     love.graphics.setColor(0.6, 0.6, 0.6)
     love.graphics.rectangle("fill", settingsX, settingsY, settingsW, 50, 10, 10)
     theme.setColor("text")
+    locale.applyFont("text")
     love.graphics.printf(locale.text("menu_settings"), settingsX, settingsY + 15, settingsW, "center")
 
     theme.setColor("textSecondary")
+    locale.applyFont("small")
     love.graphics.printf(locale.text("menu_esc_hint"), 0, height - 50, width, "center")
 end
 
