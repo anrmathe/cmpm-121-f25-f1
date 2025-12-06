@@ -1,7 +1,7 @@
 // added this file so that vs code would stop telling me thers a problem
 {
   "runtime": {
-    "version": "Lua 5.1",
+    "version": "LuaJIT",
     "pathStrict": true,
     "path": ["?.lua", "?/init.lua"]
   },
@@ -18,10 +18,16 @@
     ]
   },
   "workspace": {
-    "library": [],
+    "library": [
+      "${addons}/love2d/module/library"
+    ],
     "ignoreDir": [
       ".git",
       "node_modules"
     ]
-  }
+  },
+  "runtime.special": {
+    "love.filesystem.load": "loadfile"
+  },
+  "workspace.checkThirdParty": false
 }

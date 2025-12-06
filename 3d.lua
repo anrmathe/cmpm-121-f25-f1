@@ -15,6 +15,10 @@ local errorTimer = 0
 local cubeSize = 540
 local currentDifficulty = "medium"
 
+-- Undo/redo system
+local moveHistory = {} -- Array A: stores all moves made
+local undoneMoves = {} -- Array B: stores undone moves
+
 local faces = {
     {name = "front", normal = {0, 0, 1}, offset = {0, 0, cubeSize/2}},
     {name = "back", normal = {0, 0, -1}, offset = {0, 0, -cubeSize/2}},
@@ -167,7 +171,90 @@ local function removeNumbers(board)
     end
 end
 
+-- Record a move in the history
+local function recordMove(faceIndex, row, col, oldValue, newValue)
+    -- If we're recording a new move after undoing, clear the undone moves
+    if #undoneMoves > 0 then
+        undoneMoves = {}
+    end
+    
+    -- Create move record
+    local move = {
+        faceIndex = faceIndex,
+        row = row,
+        col = col,
+        oldValue = oldValue,
+        newValue = newValue,
+        timestamp = os.time()
+    }
+
+    -- Add to history
+    table.insert(moveHistory, move)
+end
+
+-- Undo the last move
+local function undoLastMove()
+    if #moveHistory == 0 then
+        errorMessage = "No moves to undo!"
+        errorTimer = 2
+        return
+    end
+    
+    -- Get the last move
+    local move = moveHistory[#moveHistory]
+    
+    -- Remove from history
+    table.remove(moveHistory)
+    
+    -- Store in undone moves
+    table.insert(undoneMoves, move)
+    
+    -- Apply the undo
+    local board = boards[move.faceIndex]
+    local cell = board[move.row][move.col]
+    cell.value = move.oldValue
+    
+    -- Clear any error messages
+    errorMessage = ""
+    errorTimer = 0
+    
+    return true
+end
+
+-- Redo the last undone move
+local function redoLastMove()
+    if #undoneMoves == 0 then
+        errorMessage = "No moves to redo!"
+        errorTimer = 2
+        return
+    end
+    
+    -- Get the last undone move
+    local move = undoneMoves[#undoneMoves]
+    
+    -- Remove from undone moves
+    table.remove(undoneMoves)
+    
+    -- Apply the redo
+    local board = boards[move.faceIndex]
+    local cell = board[move.row][move.col]
+    cell.value = move.newValue
+    
+    -- Add back to history
+    table.insert(moveHistory, move)
+    
+    -- Clear any error messages
+    errorMessage = ""
+    errorTimer = 0
+    
+    return true
+end
+
 local function initBoards()
+    -- Clear history when starting new game
+    moveHistory = {}
+    undoneMoves = {}
+    
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
         for row = 1, 9 do
@@ -388,6 +475,9 @@ function module.draw()
         love.graphics.print(locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col), 70, 70)
     end
     
+    -- Draw undo/redo instructions in lower right corner
+    love.graphics.print("U: Undo | R: Redo", width - 200, height - 40)
+    
     if errorMessage ~= "" then
         love.graphics.setColor(0.9, 0.1, 0.1, 1)
         local font = love.graphics.getFont()
@@ -449,6 +539,8 @@ function module.keypressed(key)
             if num and num >= 1 and num <= 9 then
                 local valid, errMsg = isValidPlacement(board, selectedCell.row, selectedCell.col, num)
                 if valid then
+                    -- Record the move before changing value
+                    recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, num)
                     cell.value = num
                     errorMessage = ""
                     errorTimer = 0
@@ -457,12 +549,23 @@ function module.keypressed(key)
                     errorTimer = 3
                 end
             elseif key == "backspace" or key == "delete" or key == "0" then
+                -- Record the move before clearing value
+                recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, 0)
                 cell.value = 0
                 errorMessage = ""
                 errorTimer = 0
             end
         end
     end
+    
+    -- Undo/redo key handling
+    if key == "u" then
+        undoLastMove()
+    elseif key == "r" then
+        redoLastMove()
+    end
+    
+    -- Rotation controls
     if key == "left" then rotation.y = rotation.y - 0.1 end
     if key == "right" then rotation.y = rotation.y + 0.1 end
     if key == "up" then rotation.x = rotation.x - 0.1 end
@@ -478,6 +581,12 @@ module._test = {
     isValidPlacement = isValidPlacement,
     isBoardComplete = isBoardComplete,
     isCubeComplete = isCubeComplete,
+    -- Export undo/redo functions for testing
+    undoLastMove = undoLastMove,
+    redoLastMove = redoLastMove,
+    recordMove = recordMove,
+    getMoveHistory = function() return moveHistory end,
+    getUndoneMoves = function() return undoneMoves end,
 }
 
 return module

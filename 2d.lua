@@ -17,6 +17,70 @@ local errorTimer = 0
 local offsetX = 0
 local offsetY = 0
 
+-- Undo/Redo system
+local moveHistory = {} -- Array A
+local undoneMoves = {} -- Array B
+
+-- Store a move in history
+local function storeMove(row, col, oldValue, newValue)
+    -- Clear undone moves if we're making a new move after undoing
+    if #undoneMoves > 0 then
+        undoneMoves = {}
+    end
+    
+    -- Only store moves where something actually changed
+    if oldValue ~= newValue then
+        table.insert(moveHistory, {
+            row = row,
+            col = col,
+            oldValue = oldValue,
+            newValue = newValue
+        })
+    end
+end
+
+-- Undo last move
+local function undo()
+    if #moveHistory > 0 then
+        local lastMove = table.remove(moveHistory)
+        local row, col, oldValue = lastMove.row, lastMove.col, lastMove.oldValue
+        
+        -- Store the move that we're undoing
+        table.insert(undoneMoves, lastMove)
+        
+        -- Restore the old value
+        grid[row][col] = oldValue
+        
+        -- Clear any error messages
+        errorMessage = ""
+        errorTimer = 0
+        
+        return true
+    end
+    return false
+end
+
+-- Redo last undone move
+local function redo()
+    if #undoneMoves > 0 then
+        local lastUndone = table.remove(undoneMoves)
+        local row, col, newValue = lastUndone.row, lastUndone.col, lastUndone.newValue
+        
+        -- Store the move that we're redoing
+        table.insert(moveHistory, lastUndone)
+        
+        -- Apply the new value
+        grid[row][col] = newValue
+        
+        -- Clear any error messages
+        errorMessage = ""
+        errorTimer = 0
+        
+        return true
+    end
+    return false
+end
+
 function isSafe(grid, row, col, num)
     for c = 1, 9 do
         if c ~= col and grid[row][c] == num then return false end
@@ -121,6 +185,10 @@ function module.load(difficulty)
     selectedCol = nil
     errorMessage = ""
     errorTimer = 0
+
+    -- Reset undo/redo history
+    moveHistory = {}
+    undoneMoves = {}
 
     grid = {}
     fixed = {}
@@ -250,6 +318,15 @@ function module.draw()
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
     end
+    
+    -- Draw undo/redo instructions in bottom right corner
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
+    theme.setColor("text")
+    
+    local undoText = "Press U to undo | Press R to redo"
+    local textWidth = mainFont:getWidth(undoText)
+    love.graphics.print(undoText, screenWidth - textWidth - 20, screenHeight - 40)
 end
 
 function module.mousepressed(x, y, button)
@@ -263,9 +340,11 @@ function module.mousepressed(x, y, button)
             local numClicked = math.floor((x - offsetX) / cellSize) + 1
             if selectedRow and selectedCol and numClicked >= 1 and numClicked <= 9 then
                 if not fixed[selectedRow][selectedCol] then
+                    local oldValue = grid[selectedRow][selectedCol]
                     local valid, errMsg = isValidPlacement(selectedRow, selectedCol, numClicked)
                     if valid then
                         grid[selectedRow][selectedCol] = numClicked
+                        storeMove(selectedRow, selectedCol, oldValue, numClicked)
                         errorMessage = ""
                         errorTimer = 0
                     else
@@ -282,13 +361,23 @@ function module.mousereleased(x, y, button)
 end
 
 function module.keypressed(key)
+    if key == "u" then
+        undo()
+        return
+    elseif key == "r" then
+        redo()
+        return
+    end
+    
     if selectedRow and selectedCol then
         if not fixed[selectedRow][selectedCol] then
             local num = tonumber(key)
             if num and num >= 1 and num <= 9 then
+                local oldValue = grid[selectedRow][selectedCol]
                 local valid, errMsg = isValidPlacement(selectedRow, selectedCol, num)
                 if valid then
                     grid[selectedRow][selectedCol] = num
+                    storeMove(selectedRow, selectedCol, oldValue, num)
                     errorMessage = ""
                     errorTimer = 0
                 else
@@ -296,7 +385,9 @@ function module.keypressed(key)
                     errorTimer = 3
                 end
             elseif key == "backspace" or key == "delete" or key == "0" then
+                local oldValue = grid[selectedRow][selectedCol]
                 grid[selectedRow][selectedCol] = 0
+                storeMove(selectedRow, selectedCol, oldValue, 0)
                 errorMessage = ""
                 errorTimer = 0
             end
@@ -324,6 +415,10 @@ module._test = {
     makePuzzle = makePuzzle,
     isValidPlacement = isValidPlacement,
     isPuzzleComplete = isPuzzleComplete,
+    undo = undo,
+    redo = redo,
+    getMoveHistory = function() return moveHistory end,
+    getUndoneMoves = function() return undoneMoves end,
 }
 
 return module
