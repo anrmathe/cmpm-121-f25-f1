@@ -28,7 +28,7 @@ browser, not in-game settings), and these visual styles are integrated deeply
 into the game's display (e.g. day/night lighting of the fictional rooms, not
 just changing the border color of the game window)**
 
-- TBD
+- We supported light and dark mode as well as color palettes by integrating them throughout the menu, and each individual game mode: 2d and 3d. Buttons, background colors, border and grid lines, all UI elements across difficulty levels, 2d and 3d, win screens, and cell colors are determined by these modes. 
 
 **[touchscreen] Support touchscreen-only gameplay (no requirement of mouse and
 keyboard).**
@@ -123,7 +123,7 @@ changed since your F1 devlog? There’s learning value in you documenting how yo
 team’s thinking has changed over time.**
 
 - We wanted to achieve many things during F1, specifically our three different
-  types of sudoku modes. We weren't able to implement the 3D sudoku (3 bpards of
+  types of sudoku modes. We weren't able to implement the 3D sudoku (3 boards of
   3x3 grids), but we were able to fully implement the 2D and cube mode. We
   realized that going for three different modes was pretty difficult, especially
   with the bugs that came with the cube version already, and decided to polish
@@ -131,7 +131,7 @@ team’s thinking has changed over time.**
   that would've costed us more time to implement/debug that wouldn't have been
   worth it in the end (considering our schedules + other classes). We were also
   thinking of implementing items that could lead to solving the puzzle more
-  easily so that it isn't just plain sudoku (this is still in talks, though).
+  easily so that it isn't just plain sudoku (this is still in talks, though). Additionally, we began incorporating the 3D world and inventory, but we still plan to tie the two with the sudoku implementation itself. 
 
 # Devlog Entry 1 - 11/21/2025
 
