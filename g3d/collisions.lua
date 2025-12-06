@@ -85,15 +85,9 @@ local function triangleRay(
     local thisLength = vectorDotProduct(q1,q2,q3, e21,e22,e23) / a
 
     -- if hit this triangle and it's closer than any other hit triangle
-<<<<<<< HEAD
     if thisLength >= tiny and (not finalLength or thisLength < finalLength) then
         --local norm_x, norm_y, norm_z = vectorCrossProduct(e11,e12,e13, e21,e22,e23)
 
-=======
-    -- if thisLength >= tiny and (not finalLength or thisLength < finalLength) then
-        --local norm_x, norm_y, norm_z = vectorCrossProduct(e11,e12,e13, e21,e22,e23)
-    if thisLength >= tiny then
->>>>>>> 96415b18a733264f4247d3c5a72fe3af9b051636
         return thisLength, src_x + dir_x*thisLength, src_y + dir_y*thisLength, src_z + dir_z*thisLength, n_x,n_y,n_z
     end
 end
