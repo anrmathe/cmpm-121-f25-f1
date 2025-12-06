@@ -20,12 +20,12 @@ jobs:
         uses: love-actions/love-actions-core@v1
         with:
           build-list: |
-            main.lua
-            2d.lua
-            3d.lua
-            world3d.lua
-            difficulty.lua
-            win.lua
-            assets/
-            g3d/
+            ./main.lua
+            ./2d.lua
+            ./3d.lua
+            ./world3d.lua
+            ./difficulty.lua
+            ./win.lua
+            ./assets/
+            ./g3d/
           package-path: ./build/sudoku.love
