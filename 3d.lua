@@ -386,7 +386,7 @@ function module.draw()
 
     if selectedCell then
         love.graphics.print("Selected: Face " .. faces[selectedCell.faceIndex].name ..
-                          " [" .. selectedCell.row .. "," .. selectedCell.col .. "]", 10, 10)
+                          " [" .. selectedCell.row .. "," .. selectedCell.col .. "]", 70, 70)
     end
     
     if errorMessage ~= "" then
