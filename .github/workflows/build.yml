@@ -1,4 +1,4 @@
-name: Build LÖVE package
+name: Build LÖVE Project
 
 on:
   push:
@@ -11,21 +11,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Create build directory
-        run: mkdir -p build
-
+      # Build the .love file
       - name: Build .love package
-        uses: love-actions/love-actions-core@v1
+        id: love-build
+        uses: nhartland/love-build@v1
         with:
-          build-list: |
-            ./main.lua
-            ./2d.lua
-            ./3d.lua
-            ./world3d.lua
-            ./difficulty.lua
-            ./win.lua
-            ./assets/
-            ./g3d/
-          package-path: ./build/sudoku.love
+          app_name: 'sudoku'        # Name of your game
+          love_version: '11.5'      # LÖVE version
+
+      # Upload the .love file as an artifact
+      - name: Upload .love artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sudoku-love
+          path: ${{ steps.love-build.outputs.love-filename }}
