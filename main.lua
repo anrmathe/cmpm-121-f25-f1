@@ -1,5 +1,15 @@
 -- main.lua - Mode Switcher for 2D/3D Sudoku and World 3D with Settings
 
+-- locale requirement
+local theme = require("theme")
+local difficulty = require("difficulty")
+local mode2d = require("2d")
+local mode3d = require("3d")
+local world3d = require("world3d")
+local winScreen = require("win")
+local settings = require("settings")
+local locale = require("locale")
+
 local mode = nil
 local mode2d = nil
 local mode3d = nil
@@ -11,8 +21,47 @@ local difficulty = nil
 local theme = require("theme")
 
 function love.load()
-    love.window.setTitle("Sudoku - 2D/3D & World")
-    love.window.setMode(900, 700)
+    love.osName = love.system.getOS()
+    
+    if osName == "Android" or osName == "iOS" then
+        -- fullscreens on mobile
+        love.window.setMode(0, 0, {fullscreen = true, resizable = false})
+    else
+        -- window settings for desktop
+        love.window.setMode(900, 700, {resizable = true, minwidth = 800, minheight = 600})
+    end
+
+    love.window.setTitle(locale.text("window_title"))
+
+    -- language-aware font sets
+
+    local CHINESE_FONT = "assets/fonts/chinese/static/NotoSansSC-Regular.ttf"
+    local ARABIC_FONT  = "assets/fonts/arabic/static/NotoNaskhArabic-Regular.ttf"
+
+    fonts = {
+        en = {
+            huge  = love.graphics.newFont(64),
+            title = love.graphics.newFont(30),
+            text  = love.graphics.newFont(20),
+            small = love.graphics.newFont(14),
+        },
+        zh = {
+            huge  = love.graphics.newFont(CHINESE_FONT, 64),
+            title = love.graphics.newFont(CHINESE_FONT, 30),
+            text  = love.graphics.newFont(CHINESE_FONT, 20),
+            small = love.graphics.newFont(CHINESE_FONT, 14),
+        },
+        ar = {
+            huge  = love.graphics.newFont(ARABIC_FONT, 64),
+            title = love.graphics.newFont(ARABIC_FONT, 30),
+            text  = love.graphics.newFont(ARABIC_FONT, 20),
+            small = love.graphics.newFont(ARABIC_FONT, 14),
+        },
+    }
+
+    if locale.applyFont then
+        locale.applyFont("text")
+    end
 end
 
 local function drawMenu()
@@ -28,9 +77,9 @@ local function drawMenu()
     local textFont = love.graphics.newFont()
     local titleFont = love.graphics.newFont(30)
     love.graphics.setFont(titleFont)
-    love.graphics.printf("SUDOKU & WORLD", 0, height/2 - 150, width, "center")
+    love.graphics.printf(locale.text("menu_title"), 0, height/2 - 150, width, "center")
     love.graphics.setFont(textFont)
-    love.graphics.printf("Choose Mode:", 0, height/2 - 40, width, "center")
+    love.graphics.printf(locale.text("menu_choose_mode"), 0, height/2 - 40, width, "center")
 
     -- Button Dimensions
     local bw = 150
@@ -47,21 +96,21 @@ local function drawMenu()
     theme.setPaletteColor("primary")
     love.graphics.rectangle("fill", bx1, by, bw, bh, 10, 10)
     theme.setColor("text")
-    love.graphics.printf("2D Sudoku", bx1, by + 20, bw, "center")
+    love.graphics.printf(locale.text("menu_mode_2d"), bx1, by + 20, bw, "center")
 
     -- Button 2: 3D
     local bx2 = bx1 + bw + spacing
     theme.setPaletteColor("secondary")
     love.graphics.rectangle("fill", bx2, by, bw, bh, 10, 10)
     theme.setColor("text")
-    love.graphics.printf("3D Sudoku", bx2, by + 20, bw, "center")
+    love.graphics.printf(locale.text("menu_mode_3d"), bx2, by + 20, bw, "center")
 
     -- Button 3: World
     local bx3 = bx2 + bw + spacing
     theme.setPaletteColor("accent")
     love.graphics.rectangle("fill", bx3, by, bw, bh, 10, 10)
     theme.setColor("text")
-    love.graphics.printf("World 3D", bx3, by + 20, bw, "center")
+    love.graphics.printf(locale.text("menu_mode_world"), bx3, by + 20, bw, "center")
 
     -- Settings button
     local settingsY = by + bh + 30
@@ -70,10 +119,10 @@ local function drawMenu()
     love.graphics.setColor(0.6, 0.6, 0.6)
     love.graphics.rectangle("fill", settingsX, settingsY, settingsW, 50, 10, 10)
     theme.setColor("text")
-    love.graphics.printf("⚙ Settings", settingsX, settingsY + 15, settingsW, "center")
+    love.graphics.printf(locale.text("menu_settings"), settingsX, settingsY + 15, settingsW, "center")
 
     theme.setColor("textSecondary")
-    love.graphics.printf("Press ESC to return to menu", 0, height - 50, width, "center")
+    love.graphics.printf(locale.text("menu_esc_hint"), 0, height - 50, width, "center")
 end
 
 function love.draw()

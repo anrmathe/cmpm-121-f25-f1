@@ -2,6 +2,7 @@
 
 local module = {}
 local theme = require("theme")
+local locale = require("locale")
 
 function module.draw()
     local t = theme.getTheme()
@@ -14,9 +15,8 @@ function module.draw()
 
     -- Celebration effect
     theme.setPaletteColor("primary")
-    local winFont = love.graphics.newFont(64)
-    love.graphics.setFont(winFont)
-    love.graphics.printf("YOU WIN!", 0, height/2 - 50, width, "center")
+    locale.applyFont("huge")
+    love.graphics.printf(locale.text("win_title_text"), 0, height/2 - 50, width, "center")
 
     -- Draw some decorative elements
     theme.setPaletteColor("accent")
@@ -29,7 +29,7 @@ function module.draw()
 
     theme.setColor("textSecondary")
     love.graphics.setFont(love.graphics.newFont(14))
-    love.graphics.printf("Press ESC to return to menu", 0, height - 50, width, "center")
+    love.graphics.printf(locale.text("win_esc_hint"), 0, height - 50, width, "center")
 end
 
 return module

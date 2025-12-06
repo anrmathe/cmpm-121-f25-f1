@@ -2,6 +2,7 @@
 
 local module = {}
 local theme = require("theme")
+local locale = require("locale")
 
 local boards = {}
 local rotation = {x = 0.3, y = 0.3}
@@ -90,13 +91,13 @@ local function isValidPlacement(board, row, col, value)
     
     for c = 1, 9 do
         if c ~= col and board[row][c].value == value then
-            return false, "Number " .. value .. " already exists in this row!"
+            return false, locale.text("error_row", value)
         end
     end
     
     for r = 1, 9 do
         if r ~= row and board[r][col].value == value then
-            return false, "Number " .. value .. " already exists in this column!"
+            return false, locale.text("error_col", value)
         end
     end
     
@@ -105,7 +106,7 @@ local function isValidPlacement(board, row, col, value)
     for r = boxStartRow, boxStartRow + 2 do
         for c = boxStartCol, boxStartCol + 2 do
             if (r ~= row or c ~= col) and board[r][c].value == value then
-                return false, "Number " .. value .. " already exists in this 3x3 box!"
+                return false, locale.text("error_box", value)
             end
         end
     end
@@ -378,15 +379,13 @@ function module.draw()
     end
     
     theme.setColor("text")
-    local mainFont = love.graphics.newFont(20)
-    love.graphics.setFont(mainFont)
+    locale.applyFont("text")
 
-    love.graphics.print("Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation", 70, 30)
-    love.graphics.print("Press ESC to return to menu", 300, 650)
+    love.graphics.print(locale.text("hud_3d_instructions"), 70, 30)
+    love.graphics.print(locale.text("hud_3d_esc"), 300, 650)
 
     if selectedCell then
-        love.graphics.print("Selected: Face " .. faces[selectedCell.faceIndex].name ..
-                          " [" .. selectedCell.row .. "," .. selectedCell.col .. "]", 70, 70)
+        love.graphics.print(locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col), 70, 70)
     end
     
     if errorMessage ~= "" then

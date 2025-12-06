@@ -1,5 +1,7 @@
 local g3d = require "g3d"
-local M = {}
+local M = {}    
+local theme = require("theme")
+local locale = require("locale")
 
 -- -- ASSETS -- --
 local floorModel = g3d.newModel("assets/cube.obj", nil, {0, -1, 0}, nil, {50, 1, 50})
@@ -258,16 +260,17 @@ function M.draw()
     love.graphics.rectangle("fill", 5, 5, 310, 65, 5, 5)
     
     love.graphics.setColor(1, 1, 1)
+    locale.applyFont("small")
     
     if not mouseLocked then
-        love.graphics.print("Right-Click to capture mouse and move", 10, 10)
+        love.graphics.print(locale.text("world_hint_mouse"), 10, 10)
     else
-        love.graphics.print("WASD to Walk | Mouse to Look | ESC to release", 10, 10)
+        love.graphics.print(locale.text("world_hint_locked"), 10, 10)
     end
     
-    love.graphics.print(string.format("Position: %.1f, %.1f, %.1f", 
+    love.graphics.print(string.format(locale.text("world_position"), 
         g3d.camera.position[1], g3d.camera.position[2], g3d.camera.position[3]), 10, 30)
-    love.graphics.print(string.format("Inventory: %d / 20 spheres", inventory), 10, 50)
+    love.graphics.print(string.format(locale.text("world_inventory"), inventory), 10, 50)
         
     love.graphics.pop()
 end

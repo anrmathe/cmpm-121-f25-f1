@@ -2,6 +2,7 @@
 
 local module = {}
 local theme = require("theme")
+local locale = require("locale")
 
 local cellSize = 50
 local selectedRow = nil
@@ -79,12 +80,12 @@ local function isValidPlacement(row, col, value)
     
     for c = 1, 9 do
         if c ~= col and grid[row][c] == value then
-            return false, "Number " .. value .. " already exists in this row!"
+            return false, locale.text("error_row", value)
         end
     end
     for r = 1, 9 do
         if r ~= row and grid[r][col] == value then
-            return false, "Number " .. value .. " already exists in this column!"
+            return false, locale.text("error_col", value)
         end
     end
     
@@ -94,11 +95,12 @@ local function isValidPlacement(row, col, value)
     for r = boxRow + 1, boxRow + 3 do
         for c = boxCol + 1, boxCol + 3 do
             if (r ~= row or c ~= col) and grid[r][c] == value then
-                return false, "Number " .. value .. " already exists in this 3x3 box!"
+                return false, locale.text("error_box", value)
             end
         end
     end
     return true
+
 end
 
 local function isPuzzleComplete()
@@ -230,14 +232,13 @@ function module.draw()
     end
 
     theme.setColor("text")
-    local mainFont = love.graphics.newFont(20)
-    love.graphics.setFont(mainFont)
+    locale.applyFont("text")
 
-    love.graphics.print("Click cell then number palette | Or use number keys | Backspace to clear", offsetX - 170, cellSize + 30)
-    love.graphics.print("Press ESC to return to menu", offsetX + 40, paletteY + cellSize + 15)
+    love.graphics.print(locale.text("hud_2d_instructions"), offsetX - 170, cellSize + 30)
+    love.graphics.print(locale.text("hud_2d_esc"), offsetX + 40, paletteY + cellSize + 15)
     
     if selectedRow and selectedCol then
-        love.graphics.print("Selected: [" .. selectedRow .. "," .. selectedCol .. "]", offsetX + 110, paletteY + cellSize + 50)
+        love.graphics.print(locale.text("hud_2d_selected", selectedRow, selectedCol), offsetX + 110, paletteY + cellSize + 50)
     end
     
     if errorMessage ~= "" then

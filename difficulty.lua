@@ -2,6 +2,7 @@
 
 local module = {}
 local theme = require("theme")
+local locale = require("locale")
 
 function module.draw()
     local t = theme.getTheme()
@@ -15,7 +16,9 @@ function module.draw()
     theme.setColor("text")
     local titleFont = love.graphics.newFont(30)
     love.graphics.setFont(titleFont)
-    love.graphics.printf("SELECT DIFFICULTY", 0, height/2 - 150, width, "center")
+    love.graphics.printf(locale.text("difficulty_title"), 0, height/2 - 150, width, "center")
+
+    locale.applyFont("text")
 
     local textFont = love.graphics.newFont(20)
     love.graphics.setFont(textFont)
@@ -28,31 +31,31 @@ function module.draw()
     local startY = height/2 - 100
 
     module.buttons = {
-        {label="Testing", x=startX, y=startY, difficulty="testing"},
-        {label="Easy", x=startX + bw + spacing, y=startY, difficulty="easy"},
-        {label="Medium", x=startX, y=startY + 100, difficulty="medium"},
-        {label="Hard", x=startX + bw + spacing, y=startY + 100, difficulty="hard"},
+        {label="difficulty_testing", x=startX, y=startY, difficulty="testing"},
+        {label="difficulty_easy", x=startX + bw + spacing, y=startY, difficulty="easy"},
+        {label="difficulty_medium", x=startX, y=startY + 100, difficulty="medium"},
+        {label="difficulty_hard", x=startX + bw + spacing, y=startY + 100, difficulty="hard"},
     }
 
     for _, b in ipairs(module.buttons) do
-        if b.label == "Testing" then
+        if b.label == "testing" then
             theme.setPaletteColor("primary")
-        elseif b.label == "Easy" then
+        elseif b.label == "easy" then
             love.graphics.setColor(0.3, 0.8, 0.4)
-        elseif b.label == "Medium" then
+        elseif b.label == "medium" then
             love.graphics.setColor(0.8, 0.7, 0.3)
-        elseif b.label == "Hard" then
+        elseif b.label == "hard" then
             love.graphics.setColor(0.8, 0.3, 0.3)
         end
         love.graphics.rectangle("fill", b.x, b.y, bw, bh, 10, 10)
         theme.setColor("text")
-        love.graphics.printf(b.label, b.x, b.y + 20, bw, "center")
+        love.graphics.printf(locale.text(b.label), b.x, b.y + 20, bw, "center")
     end
     
     theme.setColor("textSecondary")
     local smallFont = love.graphics.newFont(14)
     love.graphics.setFont(smallFont)
-    love.graphics.printf("Press ESC in game to return to menu", 0, height - 50, width, "center")
+    love.graphics.printf(locale.text("difficulty_esc_hint"), 0, height - 50, width, "center")
 end
 
 function module.mousepressed(x, y)
