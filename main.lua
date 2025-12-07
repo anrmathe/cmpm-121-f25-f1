@@ -1,4 +1,5 @@
 -- main.lua - Mode Switcher for 2D/3D Sudoku and World 3D with Settings
+print("SAVE DIR:", love.filesystem.getSaveDirectory())
 
 -- locale requirement
 local theme = require("theme")
@@ -239,7 +240,15 @@ function love.mousepressed(x, y, button)
             end
         end
     elseif mode == "2d" and mode2d then
-        mode2d.mousepressed(x, y, button)
+        local result = mode2d.mousepressed(x, y, button)
+
+        if result == "back" then
+            -- return to difficulty screen
+            mode = "difficulty"
+            difficultyModule = require("difficulty")
+            mode2d = nil
+            return
+        end
     elseif mode == "3d" and mode3d then
         mode3d.mousepressed(x, y, button)
     elseif mode == "world" and modeWorld then

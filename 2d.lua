@@ -20,6 +20,9 @@ local offsetY = 0
 local moveHistory = {} -- Array A
 local undoneMoves = {} -- Array B
 
+local saveBtn = {x = 20, y = 0, w = 60, h = 25}
+local newBtn = {x = 110, y = 0, w = 60, h = 25}
+
 -- Store a move in history
 local function storeMove(row, col, oldValue, newValue)
     -- Clear undone moves if we're making a new move after undoing
@@ -220,7 +223,6 @@ function module.load(difficulty)
         return
     end
 
-
     moveHistory = {}
     undoneMoves = {}
 
@@ -352,8 +354,7 @@ function module.draw()
         local textWidth = font:getWidth(errorMessage)
         love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, paletteY - 60, textWidth + 40, 40, 5, 5)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(errorMessage, width/
-2 - textWidth/2, paletteY - 50)
+        love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
     end
     
     -- Draw undo/redo instructions in bottom right corner
@@ -366,9 +367,36 @@ function module.draw()
     local font = love.graphics.getFont()
     local textWidth = font:getWidth(undoText)
     love.graphics.print(undoText, screenWidth - textWidth - 20, screenHeight - 40)
+
+    saveBtn.y = screenHeight - 40
+    newBtn.y = screenHeight - 40
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", saveBtn.x, saveBtn.y, saveBtn.w, saveBtn.h, 8, 8)
+    theme.setColor("text")
+    love.graphics.printf("Save", saveBtn.x, saveBtn.y + 5, saveBtn.w, "center")
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", newBtn.x, newBtn.y, newBtn.w, newBtn.h, 8, 8)
+    theme.setColor("text")
+    love.graphics.printf("New", newBtn.x, newBtn.y + 5, newBtn.w, "center")
 end
 
 function module.mousepressed(x, y, button)
+    if button == 1 then
+        if x >= saveBtn.x and x <= saveBtn.x + saveBtn.w and
+           y >= saveBtn.y and y <= saveBtn.y + saveBtn.h then
+            Save.save("2d", module.currentDifficulty, grid, fixed)
+            return
+        end
+
+        if x >= newBtn.x and x <= newBtn.x + newBtn.w and
+           y >= newBtn.y and y <= newBtn.y + newBtn.h then
+            Save.delete("2d", module.currentDifficulty)
+            return "back"
+        end
+    end
+
     if button == 1 then
         if x >= offsetX and x < offsetX + cellSize*9 and y >= offsetY and y < offsetY + cellSize*9 then
             selectedCol = math.floor((x - offsetX) / cellSize) + 1
