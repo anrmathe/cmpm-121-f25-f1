@@ -1,8 +1,7 @@
--- 2d.lua - 2D Sudoku Mode with Theme Support
-
 local module = {}
 local theme = require("theme")
 local locale = require("locale")
+local Save = require("save")
 
 local cellSize = 50
 local selectedRow = nil
@@ -37,6 +36,8 @@ local function storeMove(row, col, oldValue, newValue)
             newValue = newValue
         })
     end
+
+    Save.autosave("2d", module.currentDifficulty, module.exportState())
 end
 
 -- Undo last move
@@ -54,6 +55,8 @@ local function undo()
         -- Clear any error messages
         errorMessage = ""
         errorTimer = 0
+
+        Save.autosave("2d", module.currentDifficulty, module.exportState())
         
         return true
     end
@@ -75,6 +78,8 @@ local function redo()
         -- Clear any error messages
         errorMessage = ""
         errorTimer = 0
+
+        Save.autosave("2d", module.currentDifficulty, module.exportState())
         
         return true
     end
@@ -178,7 +183,24 @@ local function isPuzzleComplete()
     return true
 end
 
+function module.exportState()
+    return {
+        grid = grid,
+        fixed = fixed,
+        moveHistory = moveHistory,
+        undoneMoves = undoneMoves
+    }
+end
+
+function module.loadSavedState(state)
+    grid = state.grid
+    fixed = state.fixed
+    moveHistory = state.moveHistory or {}
+    undoneMoves = state.undoneMoves or {}
+end
+
 function module.load(difficulty)
+    module.currentDifficulty = difficulty
     cellSize = 40
 
     selectedRow = nil
@@ -186,7 +208,19 @@ function module.load(difficulty)
     errorMessage = ""
     errorTimer = 0
 
-    -- Reset undo/redo history
+    local saved = Save.load("2d", difficulty)
+    if saved then
+        module.loadSavedState(saved)
+
+        local boardSize = cellSize * 9
+        offsetX = (love.graphics.getWidth() - boardSize) / 2
+        offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
+        paletteY = offsetY + boardSize + 20
+
+        return
+    end
+
+
     moveHistory = {}
     undoneMoves = {}
 
@@ -227,6 +261,8 @@ function module.load(difficulty)
     offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
 
     paletteY = offsetY + boardSize + 20
+
+    Save.autosave("2d", difficulty, module.exportState())
 end
 
 function module.update(dt)
@@ -316,7 +352,8 @@ function module.draw()
         local textWidth = font:getWidth(errorMessage)
         love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, paletteY - 60, textWidth + 40, 40, 5, 5)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
+        love.graphics.print(errorMessage, width/
+2 - textWidth/2, paletteY - 50)
     end
     
     -- Draw undo/redo instructions in bottom right corner

@@ -152,6 +152,9 @@ function love.update(dt)
     if mode == "2d" and mode2d then
         local result = mode2d.update(dt)
         if result == "win" then
+            local Save = require("save")
+            Save.delete("2d", mode2d.currentDifficulty)
+
             mode = "win"
             mode2d = nil
         end
