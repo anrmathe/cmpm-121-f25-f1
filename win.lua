@@ -1,8 +1,28 @@
 -- win.lua - win screen with theme support
 
 local module = {}
-local theme = require("theme")
+local theme  = require("theme")
 local locale = require("locale")
+
+local totalTime = 0  -- time measured here in seconds
+
+local function formatElapsed(seconds)
+    local total = math.floor(seconds)
+    local hours = math.floor(total / 3600)
+    local mins  = math.floor((total % 3600) / 60)
+    local secs  = total % 60
+
+    if hours > 0 then
+        return string.format("%02d:%02d:%02d", hours, mins, secs)
+    else
+        return string.format("%d:%02d", mins, secs)
+    end
+end
+
+
+function module.setTime(seconds)
+    totalTime = seconds or 0
+end
 
 function module.draw()
     local t = theme.getTheme()
@@ -16,9 +36,15 @@ function module.draw()
     -- Celebration effect
     theme.setPaletteColor("primary")
     locale.applyFont("huge")
-    love.graphics.printf(locale.text("win_title_text"), 0, height/2 - 50, width, "center")
+    love.graphics.printf(locale.text("win_title_text"), 0, height/2 - 70, width, "center")
 
-    -- Draw some decorative elements
+    -- time taken below the title. 
+    theme.setColor("text")
+    locale.applyFont("text")
+    local timeLabel = "Time taken: " .. formatElapsed(totalTime)
+    love.graphics.printf(timeLabel, 0, height/2, width, "center")
+
+    -- Decorative elements
     theme.setPaletteColor("accent")
     love.graphics.circle("fill", width/2 - 150, height/2 - 100, 20)
     love.graphics.circle("fill", width/2 + 150, height/2 - 100, 20)

@@ -1,18 +1,18 @@
 local module = {}
-local theme = require("theme")
+local theme  = require("theme")
 local locale = require("locale")
-local Save = require("save")
--- load external dsl config
+local Save   = require("save")
 local config = require("config")
+local Win    = require("win")   -- win check 
 
-local cellSize = 50
-local selectedRow = nil
-local selectedCol = nil
-local paletteY = 0
-local grid = {}
-local fixed = {}
+local cellSize     = 50
+local selectedRow  = nil
+local selectedCol  = nil
+local paletteY     = 0
+local grid         = {}
+local fixed        = {}
 local errorMessage = ""
-local errorTimer = 0
+local errorTimer   = 0
 
 -- center offsets
 local offsetX = 0
@@ -22,17 +22,33 @@ local offsetY = 0
 local moveHistory = {} -- Array A
 local undoneMoves = {} -- Array B
 
-local saveBtn = {x = 20, y = 0, w = 60, h = 25}
-local newBtn = {x = 110, y = 0, w = 60, h = 25}
+local saveBtn = {x = 20,  y = 0, w = 60, h = 25}
+local newBtn  = {x = 110, y = 0, w = 60, h = 25}
+
+-- timer state
+local elapsedTime    = 0    -- in seconds
+local puzzleComplete = false
+
+-- format elapsed time as 0:00 or 00:00:00
+local function formatElapsed(seconds)
+    local total = math.floor(seconds)
+    local hours = math.floor(total / 3600)
+    local mins  = math.floor((total % 3600) / 60)
+    local secs  = total % 60
+
+    if hours > 0 then
+        return string.format("%02d:%02d:%02d", hours, mins, secs)
+    else
+        return string.format("%d:%02d", mins, secs)
+    end
+end
 
 -- Store a move in history
 local function storeMove(row, col, oldValue, newValue)
-    -- Clear undone moves if we're making a new move after undoing
     if #undoneMoves > 0 then
         undoneMoves = {}
     end
     
-    -- Only store moves where something actually changed
     if oldValue ~= newValue then
         table.insert(moveHistory, {
             row = row,
@@ -51,18 +67,14 @@ local function undo()
         local lastMove = table.remove(moveHistory)
         local row, col, oldValue = lastMove.row, lastMove.col, lastMove.oldValue
         
-        -- Store the move that we're undoing
         table.insert(undoneMoves, lastMove)
         
-        -- Restore the old value
         grid[row][col] = oldValue
         
-        -- Clear any error messages
         errorMessage = ""
         errorTimer = 0
 
         Save.autosave("2d", module.currentDifficulty, module.exportState())
-        
         return true
     end
     return false
@@ -74,18 +86,13 @@ local function redo()
         local lastUndone = table.remove(undoneMoves)
         local row, col, newValue = lastUndone.row, lastUndone.col, lastUndone.newValue
         
-        -- Store the move that we're redoing
         table.insert(moveHistory, lastUndone)
-        
-        -- Apply the new value
         grid[row][col] = newValue
         
-        -- Clear any error messages
         errorMessage = ""
         errorTimer = 0
 
         Save.autosave("2d", module.currentDifficulty, module.exportState())
-        
         return true
     end
     return false
@@ -127,7 +134,7 @@ function solveSudoku(grid, row, col)
         nums[i], nums[j] = nums[j], nums[i]
     end
 
-    for i=1,9 do
+    for i = 1, 9 do
         if isSafe(grid, row, col, nums[i]) then
             grid[row][col] = nums[i]
             if solveSudoku(grid, row, col+1) then return true end
@@ -174,7 +181,6 @@ local function isValidPlacement(row, col, value)
         end
     end
     return true
-
 end
 
 local function isPuzzleComplete()
@@ -190,18 +196,22 @@ end
 
 function module.exportState()
     return {
-        grid = grid,
-        fixed = fixed,
-        moveHistory = moveHistory,
-        undoneMoves = undoneMoves
+        grid          = grid,
+        fixed         = fixed,
+        moveHistory   = moveHistory,
+        undoneMoves   = undoneMoves,
+        elapsedTime   = elapsedTime,
+        puzzleComplete = puzzleComplete,
     }
 end
 
 function module.loadSavedState(state)
-    grid = state.grid
-    fixed = state.fixed
-    moveHistory = state.moveHistory or {}
-    undoneMoves = state.undoneMoves or {}
+    grid           = state.grid
+    fixed          = state.fixed
+    moveHistory    = state.moveHistory or {}
+    undoneMoves    = state.undoneMoves or {}
+    elapsedTime    = state.elapsedTime or 0
+    puzzleComplete = state.puzzleComplete or false
 end
 
 function module.load(difficulty)
@@ -212,13 +222,15 @@ function module.load(difficulty)
     selectedCol = nil
     errorMessage = ""
     errorTimer = 0
+    elapsedTime = 0
+    puzzleComplete = false
 
     local saved = Save.load("2d", difficulty)
     if saved then
         module.loadSavedState(saved)
 
         local boardSize = cellSize * 9
-        offsetX = (love.graphics.getWidth() - boardSize) / 2
+        offsetX = (love.graphics.getWidth()  - boardSize) / 2
         offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
         paletteY = offsetY + boardSize + 20
 
@@ -239,10 +251,10 @@ function module.load(difficulty)
     end
 
     -- Generate a full solved Sudoku
-    solveSudoku(grid,1,1)
+    solveSudoku(grid, 1, 1)
 
     local diffCfg = config.get2D(difficulty)
-    local holes = (diffCfg and diffCfg.holes) or 45
+    local holes   = (diffCfg and diffCfg.holes) or 45
 
     makePuzzle(grid, holes)
 
@@ -254,7 +266,7 @@ function module.load(difficulty)
     end
 
     local boardSize = cellSize * 9
-    offsetX = (love.graphics.getWidth() - boardSize) / 2
+    offsetX = (love.graphics.getWidth()  - boardSize) / 2
     offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
 
     paletteY = offsetY + boardSize + 20
@@ -270,8 +282,15 @@ function module.update(dt)
         end
     end
 
-    if isPuzzleComplete() then
-        return "win"
+    -- timer only while puzzle is not finished
+    if not puzzleComplete then
+        elapsedTime = elapsedTime + dt
+
+        if isPuzzleComplete() then
+            puzzleComplete = true
+            Win.setTime(elapsedTime)  -- hand final time to win screen
+            return "win"
+        end
     end
 end
 
@@ -336,10 +355,13 @@ function module.draw()
     locale.applyFont("text")
 
     love.graphics.print(locale.text("hud_2d_instructions"), offsetX - 170, cellSize + 30)
-    love.graphics.print(locale.text("hud_2d_esc"), offsetX + 40, paletteY + cellSize + 15)
+    love.graphics.print(locale.text("hud_2d_esc"),          offsetX + 40,  paletteY + cellSize + 15)
     
     if selectedRow and selectedCol then
-        love.graphics.print(locale.text("hud_2d_selected", selectedRow, selectedCol), offsetX + 110, paletteY + cellSize + 50)
+        love.graphics.print(
+            locale.text("hud_2d_selected", selectedRow, selectedCol),
+            offsetX + 110, paletteY + cellSize + 50
+        )
     end
     
     if errorMessage ~= "" then
@@ -352,19 +374,26 @@ function module.draw()
         love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
     end
     
-    -- Draw undo/redo instructions in bottom right corner
-    local screenWidth = love.graphics.getWidth()
+    -- Bottom-right undo/redo + top-right timer
+    local screenWidth  = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     theme.setColor("text")
     locale.applyFont("small")
     
+    -- timer (top right)
+    local timeText   = "Time: " .. formatElapsed(elapsedTime)
+    local timerFont  = love.graphics.getFont()
+    local timerWidth = timerFont:getWidth(timeText)
+    love.graphics.print(timeText, screenWidth - timerWidth - 20, 10)
+
+    -- undo / redo (bottom right)
     local undoText = "Press U to undo | Press R to redo"
-    local font = love.graphics.getFont()
-    local textWidth = font:getWidth(undoText)
+    local textWidth = timerFont:getWidth(undoText)
     love.graphics.print(undoText, screenWidth - textWidth - 20, screenHeight - 40)
 
+    -- Save / New buttons
     saveBtn.y = screenHeight - 40
-    newBtn.y = screenHeight - 40
+    newBtn.y  = screenHeight - 40
 
     love.graphics.setColor(0.5, 0.5, 0.5)
     love.graphics.rectangle("fill", saveBtn.x, saveBtn.y, saveBtn.w, saveBtn.h, 8, 8)
@@ -393,7 +422,8 @@ function module.mousepressed(x, y, button)
     end
 
     if button == 1 then
-        if x >= offsetX and x < offsetX + cellSize*9 and y >= offsetY and y < offsetY + cellSize*9 then
+        if x >= offsetX and x < offsetX + cellSize*9 and
+           y >= offsetY and y < offsetY + cellSize*9 then
             selectedCol = math.floor((x - offsetX) / cellSize) + 1
             selectedRow = math.floor((y - offsetY) / cellSize) + 1
         end
@@ -471,14 +501,14 @@ end
 
 -- test helpers
 module._test = {
-    getGrid = function() return grid end,
-    getFixed = function() return fixed end,
-    solveSudoku = solveSudoku,
-    makePuzzle = makePuzzle,
+    getGrid        = function() return grid end,
+    getFixed       = function() return fixed end,
+    solveSudoku    = solveSudoku,
+    makePuzzle     = makePuzzle,
     isValidPlacement = isValidPlacement,
-    isPuzzleComplete = isPuzzleComplete,
-    undo = undo,
-    redo = redo,
+    isPuzzleComplete  = isPuzzleComplete,
+    undo           = undo,
+    redo           = redo,
     getMoveHistory = function() return moveHistory end,
     getUndoneMoves = function() return undoneMoves end,
 }

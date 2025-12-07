@@ -1,10 +1,11 @@
 -- 3d.lua - 3D Rotating Sudoku Cube with Theme Support
 
 local module = {}
-local theme = require("theme")
+local theme  = require("theme")
 local locale = require("locale")
 -- load external dsl config
 local config = require("config")
+local Win    = require("win")   -- win check
 
 local boards = {}
 local rotation = {x = 0.3, y = 0.3}
@@ -21,23 +22,41 @@ local currentDifficulty = "medium"
 local moveHistory = {} -- Array A: stores all moves made
 local undoneMoves = {} -- Array B: stores undone moves
 
+-- timer state
+local elapsedTime    = 0     -- in seconds
+local puzzleComplete = false
+
+-- format elapsed time as M:SS or HH:MM:SS
+local function formatElapsed(seconds)
+    local total = math.floor(seconds)
+    local hours = math.floor(total / 3600)
+    local mins  = math.floor((total % 3600) / 60)
+    local secs  = total % 60
+
+    if hours > 0 then
+        return string.format("%02d:%02d:%02d", hours, mins, secs)
+    else
+        return string.format("%d:%02d", mins, secs)
+    end
+end
+
 local faces = {
-    {name = "front", normal = {0, 0, 1}, offset = {0, 0, cubeSize/2}},
-    {name = "back", normal = {0, 0, -1}, offset = {0, 0, -cubeSize/2}},
-    {name = "right", normal = {1, 0, 0}, offset = {cubeSize/2, 0, 0}},
-    {name = "left", normal = {-1, 0, 0}, offset = {-cubeSize/2, 0, 0}},
-    {name = "top", normal = {0, 1, 0}, offset = {0, cubeSize/2, 0}},
-    {name = "bottom", normal = {0, -1, 0}, offset = {0, -cubeSize/2, 0}},
+    {name = "front",  normal = {0, 0,  1}, offset = {0, 0,  cubeSize/2}},
+    {name = "back",   normal = {0, 0, -1}, offset = {0, 0, -cubeSize/2}},
+    {name = "right",  normal = {1, 0,  0}, offset = { cubeSize/2, 0, 0}},
+    {name = "left",   normal = {-1,0,  0}, offset = {-cubeSize/2, 0, 0}},
+    {name = "top",    normal = {0, 1,  0}, offset = {0,  cubeSize/2, 0}},
+    {name = "bottom", normal = {0,-1,  0}, offset = {0, -cubeSize/2, 0}},
 }
 
 local function multiplyMatrixVector(mat, vec)
-    local x = vec.x * mat[1] + vec.y * mat[2] + vec.z * mat[3] + mat[4]
-    local y = vec.x * mat[5] + vec.y * mat[6] + vec.z * mat[7] + mat[8]
-    local z = vec.x * mat[9] + vec.y * mat[10] + vec.z * mat[11] + mat[12]
+    local x = vec.x * mat[1]  + vec.y * mat[2]  + vec.z * mat[3]  + mat[4]
+    local y = vec.x * mat[5]  + vec.y * mat[6]  + vec.z * mat[7]  + mat[8]
+    local z = vec.x * mat[9]  + vec.y * mat[10] + vec.z * mat[11] + mat[12]
     local w = vec.x * mat[13] + vec.y * mat[14] + vec.z * mat[15] + mat[16]
     
     if w ~= 0 then 
-      x, y, z = x/w, y/w, z/w 
+      x, y, z = x / w, y / w, z / w
     end
     
     return {x = x, y = y, z = z, w = w}
@@ -48,10 +67,10 @@ local function getRotationMatrix(rx, ry)
     local cosY, sinY = math.cos(ry), math.sin(ry)
     
     return {
-        cosY, sinX * sinY, cosX * sinY, 0,
-        0, cosX, -sinX, 0,
-        -sinY, sinX * cosY, cosX * cosY, 0,
-        0, 0, 0, 1
+        cosY,          sinX * sinY,  cosX * sinY,  0,
+        0,             cosX,         -sinX,        0,
+        -sinY,         sinX * cosY,  cosX * cosY,  0,
+        0,             0,            0,            1
     }
 end
 
@@ -180,10 +199,10 @@ local function recordMove(faceIndex, row, col, oldValue, newValue)
     -- Create move record
     local move = {
         faceIndex = faceIndex,
-        row = row,
-        col = col,
-        oldValue = oldValue,
-        newValue = newValue,
+        row       = row,
+        col       = col,
+        oldValue  = oldValue,
+        newValue  = newValue,
         timestamp = os.time()
     }
 
@@ -195,7 +214,7 @@ end
 local function undoLastMove()
     if #moveHistory == 0 then
         errorMessage = "No moves to undo!"
-        errorTimer = 2
+        errorTimer   = 2
         return
     end
     
@@ -210,12 +229,12 @@ local function undoLastMove()
     
     -- Apply the undo
     local board = boards[move.faceIndex]
-    local cell = board[move.row][move.col]
-    cell.value = move.oldValue
+    local cell  = board[move.row][move.col]
+    cell.value  = move.oldValue
     
     -- Clear any error messages
     errorMessage = ""
-    errorTimer = 0
+    errorTimer   = 0
     
     return true
 end
@@ -224,7 +243,7 @@ end
 local function redoLastMove()
     if #undoneMoves == 0 then
         errorMessage = "No moves to redo!"
-        errorTimer = 2
+        errorTimer   = 2
         return
     end
     
@@ -236,23 +255,25 @@ local function redoLastMove()
     
     -- Apply the redo
     local board = boards[move.faceIndex]
-    local cell = board[move.row][move.col]
-    cell.value = move.newValue
+    local cell  = board[move.row][move.col]
+    cell.value  = move.newValue
     
     -- Add back to history
     table.insert(moveHistory, move)
     
     -- Clear any error messages
     errorMessage = ""
-    errorTimer = 0
+    errorTimer   = 0
     
     return true
 end
 
 local function initBoards()
     -- Clear history when starting new game
-    moveHistory = {}
-    undoneMoves = {}
+    moveHistory    = {}
+    undoneMoves    = {}
+    elapsedTime    = 0
+    puzzleComplete = false
     
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
@@ -261,9 +282,11 @@ local function initBoards()
             for col = 1, 9 do
                 local x, y, z = getCellPosition(faceIndex, row, col)
                 boards[faceIndex][row][col] = {
-                    value = 0,
-                    fixed = false,
-                    x = x, y = y, z = z,
+                    value     = 0,
+                    fixed     = false,
+                    x         = x,
+                    y         = y,
+                    z         = z,
                     faceIndex = faceIndex
                 }
             end
@@ -296,11 +319,13 @@ end
 
 function module.load(difficulty)
     currentDifficulty = difficulty or "medium"
-    rotation = {x = 0.3, y = 0.3}
-    mouseDown = false
-    selectedCell = nil
-    errorMessage = ""
-    errorTimer = 0
+    rotation          = {x = 0.3, y = 0.3}
+    mouseDown         = false
+    selectedCell      = nil
+    errorMessage      = ""
+    errorTimer        = 0
+    elapsedTime       = 0
+    puzzleComplete    = false
     initBoards()
 end
 
@@ -312,8 +337,14 @@ function module.update(dt)
         end
     end
 
-    if isCubeComplete() then
-        return "win"
+    if not puzzleComplete then
+        elapsedTime = elapsedTime + dt
+
+        if isCubeComplete() then
+            puzzleComplete = true
+            Win.setTime(elapsedTime)
+            return "win"
+        end
     end
 end
 
@@ -323,42 +354,49 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     
     local corners = {}
     local depth = 5
-    local face = faces[faceIndex]
+    local face  = faces[faceIndex]
     local nx, ny, nz = face.normal[1], face.normal[2], face.normal[3]
     local offsets = {}
     local halfCell = cellSize / 2
     
     if math.abs(nz) > 0.5 then
         offsets = {
-            {-halfCell, -halfCell, 0}, {halfCell, -halfCell, 0},
-            {halfCell, halfCell, 0}, {-halfCell, halfCell, 0},
+            {-halfCell, -halfCell, 0}, { halfCell, -halfCell, 0},
+            { halfCell,  halfCell, 0}, {-halfCell,  halfCell, 0},
         }
     elseif math.abs(nx) > 0.5 then
         offsets = {
-            {0, -halfCell, -halfCell}, {0, -halfCell, halfCell},
-            {0, halfCell, halfCell}, {0, halfCell, -halfCell},
+            {0, -halfCell, -halfCell}, {0, -halfCell,  halfCell},
+            {0,  halfCell,  halfCell}, {0,  halfCell, -halfCell},
         }
     else
         offsets = {
-            {-halfCell, 0, -halfCell}, {halfCell, 0, -halfCell},
-            {halfCell, 0, halfCell}, {-halfCell, 0, halfCell},
+            {-halfCell, 0, -halfCell}, { halfCell, 0, -halfCell},
+            { halfCell, 0,  halfCell}, {-halfCell, 0,  halfCell},
         }
     end
     
     for i, offset in ipairs(offsets) do
-        local x, y, z = project3D(cell.x + offset[1],
-                                   cell.y + offset[2],
-                                   cell.z + offset[3],
-                                   width, height)
+        local x, y, z = project3D(
+            cell.x + offset[1],
+            cell.y + offset[2],
+            cell.z + offset[3],
+            width, height
+        )
         corners[i] = {x = x, y = y, z = z}
     end
     
-    local mat = getRotationMatrix(rotation.x, rotation.y)
+    local mat       = getRotationMatrix(rotation.x, rotation.y)
     local rotNormal = multiplyMatrixVector(mat, {x = nx, y = ny, z = nz})
     if rotNormal.z >= 0 then return 0 end
     
     local brightness = math.abs(rotNormal.z) * 0.3 + 0.7
-    love.graphics.setColor(t.cellFill[1] * brightness, t.cellFill[2] * brightness, t.cellFill[3] * brightness, 1)
+    love.graphics.setColor(
+        t.cellFill[1] * brightness,
+        t.cellFill[2] * brightness,
+        t.cellFill[3] * brightness,
+        1
+    )
     
     if selectedCell and selectedCell.faceIndex == faceIndex and
        selectedCell.row == row and selectedCell.col == col then
@@ -366,7 +404,12 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     end
     
     if cell.fixed then
-        love.graphics.setColor(t.cellFixed[1] * brightness, t.cellFixed[2] * brightness, t.cellFixed[3] * brightness, 1)
+        love.graphics.setColor(
+            t.cellFixed[1] * brightness,
+            t.cellFixed[2] * brightness,
+            t.cellFixed[3] * brightness,
+            1
+        )
     end
     
     love.graphics.polygon('fill',
@@ -405,13 +448,17 @@ local function drawCell(cell, row, col, faceIndex, width, height)
     end
     
     if cell.value > 0 then
-        local cx, cy, _ = project3D(cell.x + nx * depth, cell.y + ny * depth,
-                                     cell.z + nz * depth, width, height)
+        local cx, cy, _ = project3D(
+            cell.x + nx * depth,
+            cell.y + ny * depth,
+            cell.z + nz * depth,
+            width, height
+        )
         love.graphics.setColor(t.text)
         local font = love.graphics.getFont()
         local text = tostring(cell.value)
         if not cell.fixed then
-            love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
+            love.graphics.print(text, cx - font:getWidth(text)/2,     cy - font:getHeight()/2)
             love.graphics.print(text, cx - font:getWidth(text)/2 + 1, cy - font:getHeight()/2)
         else
             love.graphics.print(text, cx - font:getWidth(text)/2, cy - font:getHeight()/2)
@@ -468,18 +515,31 @@ function module.draw()
     locale.applyFont("text")
 
     love.graphics.print(locale.text("hud_3d_instructions"), 70, 30)
-    love.graphics.print(locale.text("hud_3d_esc"), 300, 650)
+    love.graphics.print(locale.text("hud_3d_esc"),          300, 650)
 
     if selectedCell then
-        love.graphics.print(locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col), 70, 70)
+        local faceName = faces[selectedCell.faceIndex].name
+        love.graphics.print(
+            locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col),
+            70, 70
+        )
     end
     
-    -- Draw undo/redo instructions in lower right corner
-    love.graphics.print("U: Undo | R: Redo", width - 200, height - 40)
+    -- timer (top right)
+    locale.applyFont("small")
+    theme.setColor("text")
+    local timeText   = "Time: " .. formatElapsed(elapsedTime)
+    local font       = love.graphics.getFont()
+    local timerWidth = font:getWidth(timeText)
+    love.graphics.print(timeText, width - timerWidth - 20, 10)
+    
+    -- Draw undo/redo instructions in lower right corner (right-aligned)
+    local undoText  = "U: Undo | R: Redo"
+    local undoWidth = font:getWidth(undoText)
+    love.graphics.print(undoText, width - undoWidth - 20, height - 40)
     
     if errorMessage ~= "" then
         love.graphics.setColor(0.9, 0.1, 0.1, 1)
-        local font = love.graphics.getFont()
         local textWidth = font:getWidth(errorMessage)
         love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, height - 80, textWidth + 40, 40, 5, 5)
         love.graphics.setColor(1, 1, 1, 1)
@@ -532,25 +592,25 @@ end
 function module.keypressed(key)
     if selectedCell then
         local board = boards[selectedCell.faceIndex]
-        local cell = board[selectedCell.row][selectedCell.col]
+        local cell  = board[selectedCell.row][selectedCell.col]
         if not cell.fixed then
             local num = tonumber(key)
             if num and num >= 1 and num <= 9 then
                 local valid, errMsg = isValidPlacement(board, selectedCell.row, selectedCell.col, num)
                 if valid then
                     recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, num)
-                    cell.value = num
+                    cell.value   = num
                     errorMessage = ""
-                    errorTimer = 0
+                    errorTimer   = 0
                 else
                     errorMessage = errMsg
-                    errorTimer = 3
+                    errorTimer   = 3
                 end
             elseif key == "backspace" or key == "delete" or key == "0" then
                 recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, 0)
-                cell.value = 0
+                cell.value   = 0
                 errorMessage = ""
-                errorTimer = 0
+                errorTimer   = 0
             end
         end
     end
@@ -563,26 +623,26 @@ function module.keypressed(key)
     end
     
     -- Rotation controls
-    if key == "left" then rotation.y = rotation.y - 0.1 end
+    if key == "left"  then rotation.y = rotation.y - 0.1 end
     if key == "right" then rotation.y = rotation.y + 0.1 end
-    if key == "up" then rotation.x = rotation.x - 0.1 end
-    if key == "down" then rotation.x = rotation.x + 0.1 end
+    if key == "up"    then rotation.x = rotation.x - 0.1 end
+    if key == "down"  then rotation.x = rotation.x + 0.1 end
 end
 
 module._test = {
-    getBoards = function() return boards end,
+    getBoards        = function() return boards end,
     initBoardsForTest = function(diff)
         currentDifficulty = diff or "medium"
         initBoards()
     end,
     isValidPlacement = isValidPlacement,
-    isBoardComplete = isBoardComplete,
-    isCubeComplete = isCubeComplete,
-    undoLastMove = undoLastMove,
-    redoLastMove = redoLastMove,
-    recordMove = recordMove,
-    getMoveHistory = function() return moveHistory end,
-    getUndoneMoves = function() return undoneMoves end,
+    isBoardComplete  = isBoardComplete,
+    isCubeComplete   = isCubeComplete,
+    undoLastMove     = undoLastMove,
+    redoLastMove     = redoLastMove,
+    recordMove       = recordMove,
+    getMoveHistory   = function() return moveHistory end,
+    getUndoneMoves   = function() return undoneMoves end,
 }
 
 return module
