@@ -1,0 +1,37 @@
+{
+  "files.associations": {
+    "game_config.json": "json"
+  },
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "assets/game_config.json"
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "sudoku2d": { "type": "object" },
+          "sudoku3d": { "type": "object" },
+          "world3d": {
+            "type": "object",
+            "properties": {
+              "boxes": {
+                "type": "object",
+                "properties": {
+                  "count": { "type": "number" }
+                }
+              },
+              "spheres": {
+                "type": "object",
+                "properties": {
+                  "count": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "required": ["sudoku2d", "sudoku3d", "world3d"]
+      }
+    }
+  ]
+}

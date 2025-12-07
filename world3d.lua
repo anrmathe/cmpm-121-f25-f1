@@ -2,6 +2,7 @@ local g3d = require "g3d"
 local M = {}    
 local theme = require("theme")
 local locale = require("locale")
+local config = require("config")
 
 -- -- ASSETS -- --
 local floorModel = g3d.newModel("assets/cube.obj", nil, {0, -1, 0}, nil, {50, 1, 50})
@@ -13,6 +14,7 @@ local mouseLocked = false
 local boxes = {}
 local spheres = {}
 local inventory = 0
+local inventoryCapacity = 20
 local playerHeight = 0.5
 local collectRadius = 2
 local playerRadius = 0.5
@@ -29,23 +31,43 @@ function M.load()
     
     yaw = math.pi
     pitch = 0
+
+    local worldCfg = config.getWorld3D()
+    local boxCfg = worldCfg and worldCfg.boxes or {}
+    local sphereCfg = worldCfg and worldCfg.spheres or {}
+    local invCfg = worldCfg and worldCfg.inventory or {}
+
+    local boxCount   = boxCfg.count or 50
+    local boxMinX    = boxCfg.minX or -20
+    local boxMaxX    = boxCfg.maxX or  20
+    local boxMinZ    = boxCfg.minZ or -20
+    local boxMaxZ    = boxCfg.maxZ or  20
+    local boxMinH    = boxCfg.minHeight or 0.5
+    local boxMaxH    = boxCfg.maxHeight or 1.5
+
+    local sphereCount = sphereCfg.count or 20
+    local sphereMinX  = sphereCfg.minX or -20
+    local sphereMaxX  = sphereCfg.maxX or  20
+    local sphereMinZ  = sphereCfg.minZ or -20
+    local sphereMaxZ  = sphereCfg.maxZ or  20
+
+    inventoryCapacity = invCfg.capacity or 20
     
     -- Generate buildings with nice colors
     boxes = {}
-    for i = 1, 50 do
+    for i = 1, boxCount do
         local sx = 0.5
-        local sy = math.random(1, 3) * 0.5
+        local sy = math.random() * (boxMaxH - boxMinH) + boxMinH
         local sz = 0.5
         
-        -- Generate nice varied colors
         local baseR = math.random(50, 90) / 100
         local baseG = math.random(50, 90) / 100
         local baseB = math.random(50, 90) / 100
         
         table.insert(boxes, {
-            x = math.random(-20, 20),
+            x = math.random(boxMinX, boxMaxX),
             y = 0,
-            z = math.random(-20, 20),
+            z = math.random(boxMinZ, boxMaxZ),
             r = math.random() * math.pi,
             sx = sx,
             sy = sy,
@@ -56,11 +78,11 @@ function M.load()
     
     -- Generate spheres
     spheres = {}
-    for i = 1, 20 do
+    for i = 1, sphereCount do
         table.insert(spheres, {
-            x = math.random(-20, 20),
+            x = math.random(sphereMinX, sphereMaxX),
             y = 1,
-            z = math.random(-20, 20),
+            z = math.random(sphereMinZ, sphereMaxZ),
             collected = false,
             bobPhase = math.random() * math.pi * 2,
             glowPhase = math.random() * math.pi * 2
@@ -184,7 +206,7 @@ function M.update(dt)
             local dz = g3d.camera.position[3] - sphere.z
             local distance = math.sqrt(dx * dx + dz * dz)
             
-            if distance < collectRadius then
+            if distance < collectRadius and inventory < inventoryCapacity then
                 sphere.collected = true
                 inventory = inventory + 1
             end
@@ -202,12 +224,11 @@ function M.draw()
 
     -- Draw Buildings - simple approach
     for _, box in ipairs(boxes) do
-        -- Just draw the building with its color
         love.graphics.setColor(box.color)
         boxModel:setTransform({box.x, box.y, box.z}, {0, box.r, 0}, {box.sx, box.sy, box.sz})
         boxModel:draw()
         
-        -- Draw shadow (dark patch on ground)
+        -- Shadow
         love.graphics.setColor(0.08, 0.3, 0.12, 0.6)
         boxModel:setTransform(
             {box.x + 0.3, -0.98, box.z + 0.3},

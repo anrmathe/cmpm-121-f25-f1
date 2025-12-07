@@ -2,6 +2,7 @@ local module = {}
 local theme = require("theme")
 local locale = require("locale")
 local Save = require("save")
+local config = require("config")
 
 local cellSize = 50
 local selectedRow = nil
@@ -236,18 +237,11 @@ function module.load(difficulty)
         end
     end
 
+    -- Generate a full solved Sudoku
     solveSudoku(grid,1,1)
 
-    local holes = 45 -- default
-    if difficulty == "testing" then
-        holes = 2
-    elseif difficulty == "easy" then
-        holes = 25
-    elseif difficulty == "medium" then
-        holes = 45
-    elseif difficulty == "hard" then
-        holes = 60
-    end
+    local diffCfg = config.get2D(difficulty)
+    local holes = (diffCfg and diffCfg.holes) or 45
 
     makePuzzle(grid, holes)
 

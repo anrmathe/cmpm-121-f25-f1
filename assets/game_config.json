@@ -1,0 +1,36 @@
+{
+  "sudoku2d": {
+    "testing": { "holes": 2 },
+    "easy":    { "holes": 25 },
+    "medium":  { "holes": 45 },
+    "hard":    { "holes": 60 }
+  },
+  "sudoku3d": {
+    "testing": { "holes": 2 },
+    "easy":    { "holes": 25 },
+    "medium":  { "holes": 45 },
+    "hard":    { "holes": 60 }
+  },
+  "world3d": {
+    "boxes": {
+      "count": 50,
+      "minHeight": 0.5,
+      "maxHeight": 1.5,
+      "minX": -20,
+      "maxX": 20,
+      "minZ": -20,
+      "maxZ": 20
+    },
+    "spheres": {
+      "count": 20,
+      "radius": 0.3,
+      "minX": -25,
+      "maxX": 25,
+      "minZ": -25,
+      "maxZ": 25
+    },
+    "inventory": {
+      "capacity": 20
+    }
+  }
+}

@@ -3,6 +3,7 @@
 local module = {}
 local theme = require("theme")
 local locale = require("locale")
+local config = require("config")
 
 local boards = {}
 local rotation = {x = 0.3, y = 0.3}
@@ -145,11 +146,8 @@ local function fillBoard(board)
 end
 
 local function removeNumbers(board)
-    local holes = 45
-    if currentDifficulty == "testing" then holes = 2 end
-    if currentDifficulty == "easy" then holes = 25 end
-    if currentDifficulty == "medium" then holes = 45 end
-    if currentDifficulty == "hard" then holes = 60 end
+    local diffCfg = config.get3D(currentDifficulty)
+    local holes = (diffCfg and diffCfg.holes) or 45
 
     local removed = 0
     while removed < holes do
@@ -539,7 +537,6 @@ function module.keypressed(key)
             if num and num >= 1 and num <= 9 then
                 local valid, errMsg = isValidPlacement(board, selectedCell.row, selectedCell.col, num)
                 if valid then
-                    -- Record the move before changing value
                     recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, num)
                     cell.value = num
                     errorMessage = ""
@@ -549,7 +546,6 @@ function module.keypressed(key)
                     errorTimer = 3
                 end
             elseif key == "backspace" or key == "delete" or key == "0" then
-                -- Record the move before clearing value
                 recordMove(selectedCell.faceIndex, selectedCell.row, selectedCell.col, cell.value, 0)
                 cell.value = 0
                 errorMessage = ""
@@ -581,7 +577,6 @@ module._test = {
     isValidPlacement = isValidPlacement,
     isBoardComplete = isBoardComplete,
     isCubeComplete = isCubeComplete,
-    -- Export undo/redo functions for testing
     undoLastMove = undoLastMove,
     redoLastMove = redoLastMove,
     recordMove = recordMove,
