@@ -3,6 +3,7 @@
 local module = {}
 local theme = require("theme")
 local locale = require("locale")
+-- load external dsl config
 local config = require("config")
 
 local boards = {}

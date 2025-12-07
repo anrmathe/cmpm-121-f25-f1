@@ -2,6 +2,7 @@ local g3d = require "g3d"
 local M = {}    
 local theme = require("theme")
 local locale = require("locale")
+-- load external dsl config
 local config = require("config")
 
 -- -- ASSETS -- --

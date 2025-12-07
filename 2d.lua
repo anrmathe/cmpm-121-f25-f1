@@ -2,6 +2,7 @@ local module = {}
 local theme = require("theme")
 local locale = require("locale")
 local Save = require("save")
+-- load external dsl config
 local config = require("config")
 
 local cellSize = 50
