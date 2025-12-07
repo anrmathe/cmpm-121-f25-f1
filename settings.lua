@@ -1,6 +1,7 @@
 local module = {}
 local theme = require("theme")
 local locale = require("locale")
+local Save = require("save")
 
 module.buttons = {}
 
@@ -130,6 +131,14 @@ function module.draw()
     end
 
     locale.applyFont("text")
+
+    local autoY = langY + 60
+    local autoLabel = Save.autosaveEnabled and "Auto-Save: ON" or "Auto-Save: OFF"
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", width/2 - 60, autoY, 120, 40, 10, 10)
+    theme.setColor("text")
+    love.graphics.printf(autoLabel, width/2 - 60, autoY + 10, 170, "center")
+    module.buttons.autosave = {x = width/2 - 60, y = autoY, w = 120, h = 40}
     
     local backY = height - 100
     theme.setPaletteColor("button")
@@ -177,6 +186,12 @@ function module.mousepressed(x, y)
                 return nil
             end
         end
+    end
+
+    if x >= b.autosave.x and x <= b.autosave.x + b.autosave.w and
+       y >= b.autosave.y and y <= b.autosave.y + b.autosave.h then
+        Save.autosaveEnabled = not Save.autosaveEnabled
+        return nil
     end
 
     if x >= b.back.x and x <= b.back.x + b.back.w and
