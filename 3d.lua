@@ -668,7 +668,7 @@ function module.draw()
     love.graphics.print(pauseText, width - pauseWidth - 20, height - 80)
     
     -- Draw undo/redo instructions in lower right corner (right-aligned)
-    local undoText  = "U: Undo | R: Redo"
+    local undoText  = "Press U to undo | Press R to redo"
     local undoWidth = font:getWidth(undoText)
     love.graphics.print(undoText, width - undoWidth - 20, height - 40)
     
