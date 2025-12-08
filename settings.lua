@@ -135,9 +135,9 @@ function module.draw()
     local autoY = langY + 60
     local autoLabel = Save.autosaveEnabled and "Auto-Save: ON" or "Auto-Save: OFF"
     love.graphics.setColor(0.5, 0.5, 0.5)
-    love.graphics.rectangle("fill", width/2 - 60, autoY, 120, 40, 10, 10)
+    love.graphics.rectangle("fill", width/2 - 85, autoY, 170, 40, 10, 10)
     theme.setColor("text")
-    love.graphics.printf(autoLabel, width/2 - 60, autoY + 10, 170, "center")
+    love.graphics.printf(autoLabel, width/2 - 85, autoY + 10, 170, "center")
     module.buttons.autosave = {x = width/2 - 60, y = autoY, w = 120, h = 40}
     
     local backY = height - 100
