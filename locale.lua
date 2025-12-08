@@ -48,7 +48,7 @@ locale.languages = {
         hud_2d_selected       = "Selected: [%d,%d]",
         hud_2d_undo          = "Press U to undo | Press R to redo",
 
-        hud_3d_instructions   = "Drag to rotate | Click cells | Use number keys to fill | Use arrow keys for fine rotation",
+        hud_3d_instructions   = "Drag to rotate | Use arrow keys for fine rotation\nClick cells to interact | Number keys to fill",
         hud_3d_esc            = "Press ESC to return to menu",
         hud_3d_selected       = "Selected: Face %s [%d,%d]",
 
