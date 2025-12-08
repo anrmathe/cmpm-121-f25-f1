@@ -41,7 +41,7 @@ function module.draw()
     -- time taken below the title. 
     theme.setColor("text")
     locale.applyFont("text")
-    local timeLabel = "Time taken: " .. formatElapsed(totalTime)
+    local timeLabel = locale.text("win_time_label", formatElapsed(totalTime))
     love.graphics.printf(timeLabel, 0, height/2, width, "center")
 
     -- Decorative elements

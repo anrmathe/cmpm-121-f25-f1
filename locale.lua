@@ -43,10 +43,33 @@ locale.languages = {
         win_title_text        = "YOU WIN!",
         win_esc_hint          = "Press ESC to return to menu",
 
+        loading_puzzle        = "Loading puzzle...",
+
+        hud_time_label        = "Time: %s",
+        hud_pause_unpause     = "Press SPACE to unpause",
+        hud_pause_pause       = "Press SPACE to pause",
+
+        hud_save_button       = "Save",
+        hud_new_button        = "New",
+        hud_save_success      = "Game Saved!",
+        hud_save_failed       = "Save Failed!",
+        hud_new_game          = "New Game!",
+
+        hud_no_undo           = "No moves to undo!",
+        hud_no_redo           = "No moves to redo!",
+
+        world_controls_hint   = "LMB drag joystick: move | LMB drag elsewhere: look | Space / Jump button: jump",
+        world_jump_button     = "Jump",
+
+        settings_autosave_on  = "Auto-Save: ON",
+        settings_autosave_off = "Auto-Save: OFF",
+
+        win_time_label        = "Time taken: %s",
+
         hud_2d_instructions   = "Click on cells to interact | Number keys to fill | Backspace to clear",
         hud_2d_esc            = "Press ESC to return to menu",
         hud_2d_selected       = "Selected: [%d,%d]",
-        hud_2d_undo          = "Press U to undo | Press R to redo",
+        hud_2d_undo           = "Press U to undo | Press R to redo",
 
         hud_3d_instructions   = "Drag to rotate | Use arrow keys for fine rotation\nClick cells to interact | Number keys to fill",
         hud_3d_esc            = "Press ESC to return to menu",
@@ -99,10 +122,33 @@ locale.languages = {
         win_title_text        = "你赢了！",
         win_esc_hint          = "按 ESC 返回菜单",
 
+        loading_puzzle        = "正在加载谜题...",
+
+        hud_time_label        = "时间：%s",
+        hud_pause_unpause     = "按空格继续",
+        hud_pause_pause       = "按空格暂停",
+
+        hud_save_button       = "保存",
+        hud_new_button        = "新游戏",
+        hud_save_success      = "游戏已保存！",
+        hud_save_failed       = "保存失败！",
+        hud_new_game          = "已开始新游戏！",
+
+        hud_no_undo           = "没有可以撤销的操作！",
+        hud_no_redo           = "没有可以重做的操作！",
+
+        world_controls_hint   = "左键拖动摇杆移动 | 左键在其他地方拖动观察 | 空格 / 跳跃按钮：跳跃",
+        world_jump_button     = "跳跃",
+
+        settings_autosave_on  = "自动保存：开",
+        settings_autosave_off = "自动保存：关",
+
+        win_time_label        = "用时：%s",
+
         hud_2d_instructions   = "点击格子再选数字 | 或使用数字键 | Backspace 删除",
         hud_2d_esc            = "按 ESC 返回菜单",
         hud_2d_selected       = "已选：[%d,%d]",
-        hud_2d_undo          = "按 U 撤销 | 按 R 重做",
+        hud_2d_undo           = "按 U 撤销 | 按 R 重做",
 
         hud_3d_instructions   = "拖动旋转 | 点击格子 | 数字键填写 | 方向键微调",
         hud_3d_esc            = "按 ESC 返回菜单",
@@ -154,6 +200,29 @@ locale.languages = {
 
         win_title_text        = "فزت!",
         win_esc_hint          = "اضغط ESC للعودة إلى القائمة",
+
+        loading_puzzle        = "جارٍ تحميل اللغز...",
+
+        hud_time_label        = "الوقت: %s",
+        hud_pause_unpause     = "اضغط SPACE للمتابعة",
+        hud_pause_pause       = "اضغط SPACE للإيقاف المؤقت",
+
+        hud_save_button       = "حفظ",
+        hud_new_button        = "جديد",
+        hud_save_success      = "تم الحفظ!",
+        hud_save_failed       = "فشل الحفظ!",
+        hud_new_game          = "لعبة جديدة!",
+
+        hud_no_undo           = "لا يوجد ما يمكن التراجع عنه!",
+        hud_no_redo           = "لا يوجد ما يمكن إعادته!",
+
+        world_controls_hint   = "اسحب بالفأرة على عصا التحكم للتحرك | اسحب في مكان آخر للنظر | Space / زر القفز: قفز",
+        world_jump_button     = "قفز",
+
+        settings_autosave_on  = "الحفظ التلقائي: يعمل",
+        settings_autosave_off = "الحفظ التلقائي: متوقف",
+
+        win_time_label        = "الوقت المستغرق: %s",
 
         hud_2d_instructions   = "انقر على الخانة ثم رقم | أو استخدم أزرار الأرقام | Backspace للحذف",
         hud_2d_esc            = "اضغط ESC للعودة إلى القائمة",

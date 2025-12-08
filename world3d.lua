@@ -452,9 +452,9 @@ function M.draw()
     end
     
     love.graphics.print(string.format(locale.text("world_position"), 
-        g3d.camera.position[1], g3d.camera.position[2], g3d.camera.position[3]), 10, 30)
+    g3d.camera.position[1], g3d.camera.position[2], g3d.camera.position[3]), 10, 30)
     love.graphics.print(string.format(locale.text("world_inventory"), inventory), 10, 50)
-    love.graphics.print("LMB drag joystick: move | LMB drag elsewhere: look | Space / Jump button: jump", 10, 70)
+    love.graphics.print(locale.text("world_controls_hint"), 10, 70)
 
     -- Draw joystick 
     local cx, cy, r = getJoystickCenter()
@@ -478,7 +478,7 @@ function M.draw()
     love.graphics.rectangle("line", jx - jHalf, jy - jHalf, jSize, jSize, jHalf * 0.4, jHalf * 0.4)
 
     local font = love.graphics.getFont()
-    local text = "Jump"
+    local text = locale.text("world_jump_button")
     love.graphics.setColor(1, 1, 1, 0.95)
     love.graphics.print(text, jx - font:getWidth(text)/2, jy - font:getHeight()/2)
         

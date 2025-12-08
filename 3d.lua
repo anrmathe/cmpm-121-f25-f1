@@ -313,7 +313,7 @@ end
 local function undoLastMove()
     if isPaused or not puzzleInitialized then return end
     if #moveHistory == 0 then
-        errorMessage = "No moves to undo!"
+        errorMessage = locale.text("hud_no_undo")
         errorTimer   = 2
         return
     end
@@ -332,7 +332,7 @@ end
 local function redoLastMove()
     if isPaused or not puzzleInitialized then return end
     if #undoneMoves == 0 then
-        errorMessage = "No moves to redo!"
+        errorMessage = locale.text("hud_no_redo")
         errorTimer   = 2
         return
     end
@@ -590,7 +590,7 @@ function module.draw()
         love.graphics.setColor(theme.getTheme().background)
         love.graphics.rectangle("fill", 0, 0, width, height)
         love.graphics.setColor(theme.getTheme().text)
-        love.graphics.print("Loading puzzle...", width/2 - 50, height/2)
+        love.graphics.print(locale.text("loading_puzzle"), width/2 - 50, height/2)
         return
     end
     
@@ -657,18 +657,18 @@ function module.draw()
     -- timer (top right)
     locale.applyFont("small")
     theme.setColor("text")
-    local timeText   = "Time: " .. formatElapsed(elapsedTime)
+    local timeText   = locale.text("hud_time_label", formatElapsed(elapsedTime))
     local font       = love.graphics.getFont()
     local timerWidth = font:getWidth(timeText)
     love.graphics.print(timeText, width - timerWidth - 20, 10)
     
     -- Draw pause text (above undo/redo instructions)
-    local pauseText = isPaused and "Press SPACE to unpause" or "Press SPACE to pause"
+    local pauseText = isPaused and locale.text("hud_pause_unpause") or locale.text("hud_pause_pause")
     local pauseWidth = font:getWidth(pauseText)
     love.graphics.print(pauseText, width - pauseWidth - 20, height - 80)
     
     -- Draw undo/redo instructions in lower right corner (right-aligned)
-    local undoText  = "Press U to undo | Press R to redo"
+    local undoText  = locale.text("hud_2d_undo")
     local undoWidth = font:getWidth(undoText)
     love.graphics.print(undoText, width - undoWidth - 20, height - 40)
     
@@ -679,12 +679,12 @@ function module.draw()
     love.graphics.setColor(0.5, 0.5, 0.5)
     love.graphics.rectangle("fill", saveBtn.x, saveBtn.y, saveBtn.w, saveBtn.h, 8, 8)
     theme.setColor("text")
-    love.graphics.printf("Save", saveBtn.x, saveBtn.y + 5, saveBtn.w, "center")
+    love.graphics.printf(locale.text("hud_save_button"), saveBtn.x, saveBtn.y + 5, saveBtn.w, "center")
 
     love.graphics.setColor(0.5, 0.5, 0.5)
     love.graphics.rectangle("fill", newBtn.x, newBtn.y, newBtn.w, newBtn.h, 8, 8)
     theme.setColor("text")
-    love.graphics.printf("New", newBtn.x, newBtn.y + 5, newBtn.w, "center")
+    love.graphics.printf(locale.text("hud_new_button"), newBtn.x, newBtn.y + 5, newBtn.w, "center")
     
     -- Draw save message if active
     if saveMessage ~= "" then
@@ -716,10 +716,10 @@ function module.mousepressed(x, y, button)
            y >= saveBtn.y and y <= saveBtn.y + saveBtn.h then
             local state = module.exportState()
             if state and Save.save("3d", currentDifficulty, state) then
-                saveMessage = "Game Saved!"
+                saveMessage = locale.text("hud_save_success")
                 saveMessageTimer = 2  -- Show for 2 seconds
             else
-                saveMessage = "Save Failed!"
+                saveMessage = locale.text("hud_save_failed")
                 saveMessageTimer = 2
             end
             return
@@ -733,7 +733,7 @@ function module.mousepressed(x, y, button)
             -- Reload the puzzle
             puzzleInitialized = false
             module.load(currentDifficulty)
-            saveMessage = "New Game!"
+            saveMessage = locale.text("hud_new_game")
             saveMessageTimer = 2  -- Show for 2 seconds
             return
         end
