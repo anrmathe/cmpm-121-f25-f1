@@ -26,6 +26,9 @@ local undoneMoves = {} -- Array B: stores undone moves
 local elapsedTime    = 0     -- in seconds
 local puzzleComplete = false
 
+-- Pause state
+local isPaused = false
+
 -- format elapsed time as M:SS or HH:MM:SS
 local function formatElapsed(seconds)
     local total = math.floor(seconds)
@@ -38,6 +41,12 @@ local function formatElapsed(seconds)
     else
         return string.format("%d:%02d", mins, secs)
     end
+end
+
+-- Toggle pause state
+local function togglePause()
+    if puzzleComplete then return end
+    isPaused = not isPaused
 end
 
 local faces = {
@@ -191,6 +200,8 @@ end
 
 -- Record a move in the history
 local function recordMove(faceIndex, row, col, oldValue, newValue)
+    if isPaused then return end
+    
     -- If we're recording a new move after undoing, clear the undone moves
     if #undoneMoves > 0 then
         undoneMoves = {}
@@ -212,6 +223,7 @@ end
 
 -- Undo the last move
 local function undoLastMove()
+    if isPaused then return end
     if #moveHistory == 0 then
         errorMessage = "No moves to undo!"
         errorTimer   = 2
@@ -241,6 +253,7 @@ end
 
 -- Redo the last undone move
 local function redoLastMove()
+    if isPaused then return end
     if #undoneMoves == 0 then
         errorMessage = "No moves to redo!"
         errorTimer   = 2
@@ -274,6 +287,7 @@ local function initBoards()
     undoneMoves    = {}
     elapsedTime    = 0
     puzzleComplete = false
+    isPaused       = false
     
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
@@ -326,10 +340,13 @@ function module.load(difficulty)
     errorTimer        = 0
     elapsedTime       = 0
     puzzleComplete    = false
+    isPaused          = false
     initBoards()
 end
 
 function module.update(dt)
+    if isPaused or puzzleComplete then return end
+    
     if errorTimer > 0 then
         errorTimer = errorTimer - dt
         if errorTimer <= 0 then
@@ -492,37 +509,40 @@ function module.draw()
     end
     love.graphics.rectangle("fill", 0, 0, width, height)
     
-    local cellsWithDepth = {}
-    for faceIndex = 1, 6 do
-        for row = 1, 9 do
-            for col = 1, 9 do
-                local cell = boards[faceIndex][row][col]
-                local _, _, z = project3D(cell.x, cell.y, cell.z, width, height)
-                table.insert(cellsWithDepth, {
-                    cell = cell, row = row, col = col,
-                    z = z, faceIndex = faceIndex
-                })
+    -- Only draw the cube if not paused
+    if not isPaused then
+        local cellsWithDepth = {}
+        for faceIndex = 1, 6 do
+            for row = 1, 9 do
+                for col = 1, 9 do
+                    local cell = boards[faceIndex][row][col]
+                    local _, _, z = project3D(cell.x, cell.y, cell.z, width, height)
+                    table.insert(cellsWithDepth, {
+                        cell = cell, row = row, col = col,
+                        z = z, faceIndex = faceIndex
+                    })
+                end
             end
         end
-    end
-    table.sort(cellsWithDepth, function(a, b) return a.z > b.z end)
-    
-    for _, item in ipairs(cellsWithDepth) do
-        drawCell(item.cell, item.row, item.col, item.faceIndex, width, height)
-    end
-    
-    theme.setColor("text")
-    locale.applyFont("text")
+        table.sort(cellsWithDepth, function(a, b) return a.z > b.z end)
+        
+        for _, item in ipairs(cellsWithDepth) do
+            drawCell(item.cell, item.row, item.col, item.faceIndex, width, height)
+        end
+        
+        theme.setColor("text")
+        locale.applyFont("text")
 
-    love.graphics.print(locale.text("hud_3d_instructions"), 70, 30)
-    love.graphics.print(locale.text("hud_3d_esc"),          300, 650)
+        love.graphics.print(locale.text("hud_3d_instructions"), 70, 30)
+        love.graphics.print(locale.text("hud_3d_esc"),          300, 650)
 
-    if selectedCell then
-        local faceName = faces[selectedCell.faceIndex].name
-        love.graphics.print(
-            locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col),
-            70, 70
-        )
+        if selectedCell then
+            local faceName = faces[selectedCell.faceIndex].name
+            love.graphics.print(
+                locale.text("hud_3d_selected", faceName, selectedCell.row, selectedCell.col),
+                70, 70
+            )
+        end
     end
     
     -- timer (top right)
@@ -532,6 +552,11 @@ function module.draw()
     local font       = love.graphics.getFont()
     local timerWidth = font:getWidth(timeText)
     love.graphics.print(timeText, width - timerWidth - 20, 10)
+    
+    -- Draw pause text (above undo/redo instructions)
+    local pauseText = isPaused and "Press SPACE to unpause" or "Press SPACE to pause"
+    local pauseWidth = font:getWidth(pauseText)
+    love.graphics.print(pauseText, width - pauseWidth - 20, height - 80)
     
     -- Draw undo/redo instructions in lower right corner (right-aligned)
     local undoText  = "U: Undo | R: Redo"
@@ -548,6 +573,8 @@ function module.draw()
 end
 
 function module.mousepressed(x, y, button)
+    if isPaused then return end
+    
     if button == 1 then
         mouseDown = true
         lastMouseX, lastMouseY = x, y
@@ -582,6 +609,7 @@ function module.mousereleased(x, y, button)
 end
 
 function module.mousemoved(x, y, dx, dy)
+    if isPaused then return end
     if mouseDown then
         rotation.y = rotation.y + dx * 0.01
         rotation.x = rotation.x + dy * 0.01
@@ -590,6 +618,15 @@ function module.mousemoved(x, y, dx, dy)
 end
 
 function module.keypressed(key)
+    -- Space to toggle pause
+    if key == "space" then
+        togglePause()
+        return
+    end
+    
+    -- Don't process other keys if paused
+    if isPaused then return end
+    
     if selectedCell then
         local board = boards[selectedCell.faceIndex]
         local cell  = board[selectedCell.row][selectedCell.col]
@@ -643,6 +680,8 @@ module._test = {
     recordMove       = recordMove,
     getMoveHistory   = function() return moveHistory end,
     getUndoneMoves   = function() return undoneMoves end,
+    togglePause      = togglePause,
+    isPaused         = function() return isPaused end,
 }
 
 return module

@@ -1,15 +1,15 @@
 {
   "sudoku2d": {
     "testing": { "holes": 2 },
-    "easy":    { "holes": 25 },
-    "medium":  { "holes": 45 },
-    "hard":    { "holes": 60 }
+    "easy": { "holes": 25 },
+    "medium": { "holes": 45 },
+    "hard": { "holes": 60 }
   },
   "sudoku3d": {
     "testing": { "holes": 2 },
-    "easy":    { "holes": 25 },
-    "medium":  { "holes": 45 },
-    "hard":    { "holes": 60 }
+    "easy": { "holes": 25 },
+    "medium": { "holes": 45 },
+    "hard": { "holes": 60 }
   },
   "world3d": {
     "boxes": {

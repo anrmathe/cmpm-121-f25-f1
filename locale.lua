@@ -43,12 +43,12 @@ locale.languages = {
         win_title_text        = "YOU WIN!",
         win_esc_hint          = "Press ESC to return to menu",
 
-        hud_2d_instructions   = "Click cell then number palette | Or use number keys | Backspace to clear",
+        hud_2d_instructions   = "Click on cells to interact | Number keys to fill | Backspace to clear",
         hud_2d_esc            = "Press ESC to return to menu",
         hud_2d_selected       = "Selected: [%d,%d]",
         hud_2d_undo          = "Press U to undo | Press R to redo",
 
-        hud_3d_instructions   = "Drag to rotate | Click cells | Number keys to fill | Arrow keys for fine rotation",
+        hud_3d_instructions   = "Drag to rotate | Click cells | Use number keys to fill | Use arrow keys for fine rotation",
         hud_3d_esc            = "Press ESC to return to menu",
         hud_3d_selected       = "Selected: Face %s [%d,%d]",
 

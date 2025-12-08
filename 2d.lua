@@ -29,6 +29,16 @@ local newBtn  = {x = 110, y = 0, w = 60, h = 25}
 local elapsedTime    = 0    -- in seconds
 local puzzleComplete = false
 
+-- New: Save/New game feedback
+local saveMessage = ""
+local saveMessageTimer = 0
+
+-- Track if puzzle is initialized
+local puzzleInitialized = false
+
+-- Pause state
+local isPaused = false
+
 -- format elapsed time as 0:00 or 00:00:00
 local function formatElapsed(seconds)
     local total = math.floor(seconds)
@@ -43,8 +53,29 @@ local function formatElapsed(seconds)
     end
 end
 
+-- Toggle pause state
+local function togglePause()
+    if not puzzleInitialized or puzzleComplete then return end
+    isPaused = not isPaused
+end
+
+-- Initialize empty grid and fixed arrays
+local function initEmptyGrid()
+    grid = {}
+    fixed = {}
+    for i = 1, 9 do
+        grid[i] = {}
+        fixed[i] = {}
+        for j = 1, 9 do
+            grid[i][j] = 0
+            fixed[i][j] = false
+        end
+    end
+end
+
 -- Store a move in history
 local function storeMove(row, col, oldValue, newValue)
+    if not puzzleInitialized or isPaused then return end
     if #undoneMoves > 0 then
         undoneMoves = {}
     end
@@ -63,6 +94,7 @@ end
 
 -- Undo last move
 local function undo()
+    if not puzzleInitialized or isPaused then return false end
     if #moveHistory > 0 then
         local lastMove = table.remove(moveHistory)
         local row, col, oldValue = lastMove.row, lastMove.col, lastMove.oldValue
@@ -82,6 +114,7 @@ end
 
 -- Redo last undone move
 local function redo()
+    if not puzzleInitialized or isPaused then return false end
     if #undoneMoves > 0 then
         local lastUndone = table.remove(undoneMoves)
         local row, col, newValue = lastUndone.row, lastUndone.col, lastUndone.newValue
@@ -99,6 +132,7 @@ local function redo()
 end
 
 function isSafe(grid, row, col, num)
+    if not grid or not grid[row] then return false end
     for c = 1, 9 do
         if c ~= col and grid[row][c] == num then return false end
     end
@@ -121,6 +155,7 @@ function isSafe(grid, row, col, num)
 end
 
 function solveSudoku(grid, row, col)
+    if not grid then return false end
     if row == 10 then return true end
     if col == 10 then return solveSudoku(grid, row+1, 1) end
 
@@ -145,6 +180,7 @@ function solveSudoku(grid, row, col)
 end
 
 function makePuzzle(grid, holes)
+    if not grid then return end
     local removed = 0
     while removed < holes do
         local r = love.math.random(1,9)
@@ -157,6 +193,7 @@ function makePuzzle(grid, holes)
 end
 
 local function isValidPlacement(row, col, value)
+    if not puzzleInitialized or not grid or isPaused then return true end
     if value == 0 then return true end
     
     for c = 1, 9 do
@@ -184,6 +221,7 @@ local function isValidPlacement(row, col, value)
 end
 
 local function isPuzzleComplete()
+    if not puzzleInitialized or not grid or isPaused then return false end
     for i = 1, 9 do
         for j = 1, 9 do
             if grid[i][j] == 0 or not isSafe(grid, i, j, grid[i][j]) then
@@ -195,6 +233,7 @@ local function isPuzzleComplete()
 end
 
 function module.exportState()
+    if not puzzleInitialized then return nil end
     return {
         grid          = grid,
         fixed         = fixed,
@@ -206,12 +245,36 @@ function module.exportState()
 end
 
 function module.loadSavedState(state)
-    grid           = state.grid
-    fixed          = state.fixed
+    if not state then return false end
+    if not state.grid or not state.fixed then
+        return false
+    end
+    
+    -- Ensure grid is properly structured
+    grid = {}
+    for i = 1, 9 do
+        grid[i] = state.grid[i] or {}
+        for j = 1, 9 do
+            grid[i][j] = state.grid[i][j] or 0
+        end
+    end
+    
+    -- Ensure fixed is properly structured
+    fixed = {}
+    for i = 1, 9 do
+        fixed[i] = state.fixed[i] or {}
+        for j = 1, 9 do
+            fixed[i][j] = state.fixed[i][j] or false
+        end
+    end
+    
     moveHistory    = state.moveHistory or {}
     undoneMoves    = state.undoneMoves or {}
     elapsedTime    = state.elapsedTime or 0
     puzzleComplete = state.puzzleComplete or false
+    puzzleInitialized = true
+    isPaused = false
+    return true
 end
 
 function module.load(difficulty)
@@ -224,34 +287,45 @@ function module.load(difficulty)
     errorTimer = 0
     elapsedTime = 0
     puzzleComplete = false
+    saveMessage = ""
+    saveMessageTimer = 0
+    puzzleInitialized = false
+    isPaused = false
 
+    -- First, delete any corrupted save file for easy mode
+    if difficulty == "easy" then
+        Save.delete("2d", "easy")
+    end
+    
     local saved = Save.load("2d", difficulty)
     if saved then
-        module.loadSavedState(saved)
-
-        local boardSize = cellSize * 9
-        offsetX = (love.graphics.getWidth()  - boardSize) / 2
-        offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
-        paletteY = offsetY + boardSize + 20
-
-        return
-    end
-
-    moveHistory = {}
-    undoneMoves = {}
-
-    grid = {}
-    fixed = {}
-
-    for i = 1, 9 do
-        grid[i] = {}
-        for j = 1, 9 do
-            grid[i][j] = 0
+        if module.loadSavedState(saved) then
+            local boardSize = cellSize * 9
+            offsetX = (love.graphics.getWidth()  - boardSize) / 2
+            offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
+            paletteY = offsetY + boardSize + 20
+            return
+        else
+            -- If saved state is corrupted, delete it and generate new
+            Save.delete("2d", difficulty)
         end
     end
 
+    -- Generate new puzzle
+    moveHistory = {}
+    undoneMoves = {}
+    
+    initEmptyGrid()
+
     -- Generate a full solved Sudoku
-    solveSudoku(grid, 1, 1)
+    if not solveSudoku(grid, 1, 1) then
+        -- If solving fails, create a simple valid grid
+        for i = 1, 9 do
+            for j = 1, 9 do
+                grid[i][j] = ((i-1)*3 + math.floor((i-1)/3) + (j-1)) % 9 + 1
+            end
+        end
+    end
 
     local diffCfg = config.get2D(difficulty)
     local holes   = (diffCfg and diffCfg.holes) or 45
@@ -259,7 +333,6 @@ function module.load(difficulty)
     makePuzzle(grid, holes)
 
     for i = 1, 9 do
-        fixed[i] = {}
         for j = 1, 9 do
             fixed[i][j] = (grid[i][j] ~= 0)
         end
@@ -270,15 +343,27 @@ function module.load(difficulty)
     offsetY = (love.graphics.getHeight() - boardSize - 100) / 2
 
     paletteY = offsetY + boardSize + 20
+    
+    puzzleInitialized = true
 
     Save.autosave("2d", difficulty, module.exportState())
 end
 
 function module.update(dt)
+    if not puzzleInitialized or isPaused or puzzleComplete then return end
+    
     if errorTimer > 0 then
         errorTimer = errorTimer - dt
         if errorTimer <= 0 then
             errorMessage = ""
+        end
+    end
+    
+    -- Update save message timer
+    if saveMessageTimer > 0 then
+        saveMessageTimer = saveMessageTimer - dt
+        if saveMessageTimer <= 0 then
+            saveMessage = ""
         end
     end
 
@@ -295,83 +380,96 @@ function module.update(dt)
 end
 
 function module.draw()
+    if not puzzleInitialized then 
+        -- Draw loading message
+        local width, height = love.graphics.getDimensions()
+        love.graphics.setColor(theme.getTheme().background)
+        love.graphics.rectangle("fill", 0, 0, width, height)
+        love.graphics.setColor(theme.getTheme().text)
+        love.graphics.print("Loading puzzle...", width/2 - 50, height/2)
+        return
+    end
+    
     local t = theme.getTheme()
     local p = theme.getPalette()
     
     love.graphics.setColor(t.background)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
-    for i = 1, 9 do
-        for j = 1, 9 do
-            local x = offsetX + (j-1)*cellSize
-            local y = offsetY + (i-1)*cellSize
+    -- Don't draw the puzzle if paused
+    if not isPaused then
+        for i = 1, 9 do
+            for j = 1, 9 do
+                local x = offsetX + (j-1)*cellSize
+                local y = offsetY + (i-1)*cellSize
 
-            if fixed[i][j] then
-                love.graphics.setColor(t.cellFixed)
-            else
-                love.graphics.setColor(t.cellFill)
-            end
-            love.graphics.rectangle("fill", x, y, cellSize, cellSize)
-            
-            love.graphics.setColor(t.cellBorder)
-            love.graphics.rectangle("line", x, y, cellSize, cellSize)
-
-            if grid[i][j] ~= 0 then
                 if fixed[i][j] then
-                    love.graphics.setColor(t.textFixed)
+                    love.graphics.setColor(t.cellFixed)
                 else
-                    love.graphics.setColor(t.text)
+                    love.graphics.setColor(t.cellFill)
                 end
-                love.graphics.print(grid[i][j], x + cellSize/3, y + cellSize/4)
+                love.graphics.rectangle("fill", x, y, cellSize, cellSize)
+                
+                love.graphics.setColor(t.cellBorder)
+                love.graphics.rectangle("line", x, y, cellSize, cellSize)
+
+                if grid[i][j] ~= 0 then
+                    if fixed[i][j] then
+                        love.graphics.setColor(t.textFixed)
+                    else
+                        love.graphics.setColor(t.text)
+                    end
+                    love.graphics.print(grid[i][j], x + cellSize/3, y + cellSize/4)
+                end
             end
         end
-    end
 
-    love.graphics.setColor(t.gridLine)
-    love.graphics.setLineWidth(3)
-    for i = 0, 3 do
-        love.graphics.line(offsetX, offsetY + i*cellSize*3, offsetX + cellSize*9, offsetY + i*cellSize*3)
-        love.graphics.line(offsetX + i*cellSize*3, offsetY, offsetX + i*cellSize*3, offsetY + cellSize*9)
-    end
-    love.graphics.setLineWidth(1)
+        love.graphics.setColor(t.gridLine)
+        love.graphics.setLineWidth(3)
+        for i = 0, 3 do
+            love.graphics.line(offsetX, offsetY + i*cellSize*3, offsetX + cellSize*9, offsetY + i*cellSize*3)
+            love.graphics.line(offsetX + i*cellSize*3, offsetY, offsetX + i*cellSize*3, offsetY + cellSize*9)
+        end
+        love.graphics.setLineWidth(1)
 
-    for n = 1, 9 do
-        local px = offsetX + (n-1)*cellSize
-        theme.setPaletteColor("button", 0.7)
-        love.graphics.rectangle("fill", px, paletteY, cellSize, cellSize)
+        for n = 1, 9 do
+            local px = offsetX + (n-1)*cellSize
+            theme.setPaletteColor("button", 0.7)
+            love.graphics.rectangle("fill", px, paletteY, cellSize, cellSize)
+            theme.setColor("text")
+            love.graphics.rectangle("line", px, paletteY, cellSize, cellSize)
+            love.graphics.print(n, px + cellSize/3, paletteY + cellSize/4)
+        end
+
+        if selectedRow and selectedCol then
+            love.graphics.setColor(p.highlight)
+            local hx = offsetX + (selectedCol-1)*cellSize
+            local hy = offsetY + (selectedRow-1)*cellSize
+            love.graphics.rectangle("fill", hx, hy, cellSize, cellSize)
+        end
+
         theme.setColor("text")
-        love.graphics.rectangle("line", px, paletteY, cellSize, cellSize)
-        love.graphics.print(n, px + cellSize/3, paletteY + cellSize/4)
-    end
+        locale.applyFont("text")
 
-    if selectedRow and selectedCol then
-        love.graphics.setColor(p.highlight)
-        local hx = offsetX + (selectedCol-1)*cellSize
-        local hy = offsetY + (selectedRow-1)*cellSize
-        love.graphics.rectangle("fill", hx, hy, cellSize, cellSize)
-    end
-
-    theme.setColor("text")
-    locale.applyFont("text")
-
-    love.graphics.print(locale.text("hud_2d_instructions"), offsetX - 170, cellSize + 30)
-    love.graphics.print(locale.text("hud_2d_esc"),          offsetX + 40,  paletteY + cellSize + 15)
-    
-    if selectedRow and selectedCol then
-        love.graphics.print(
-            locale.text("hud_2d_selected", selectedRow, selectedCol),
-            offsetX + 110, paletteY + cellSize + 50
-        )
-    end
-    
-    if errorMessage ~= "" then
-        local width = love.graphics.getWidth()
-        love.graphics.setColor(0.9, 0.1, 0.1, 1)
-        local font = love.graphics.getFont()
-        local textWidth = font:getWidth(errorMessage)
-        love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, paletteY - 60, textWidth + 40, 40, 5, 5)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
+        love.graphics.print(locale.text("hud_2d_instructions"), offsetX - 170, cellSize + 30)
+        love.graphics.print(locale.text("hud_2d_esc"),          offsetX + 40,  paletteY + cellSize + 15)
+        
+        if selectedRow and selectedCol then
+            love.graphics.print(
+                locale.text("hud_2d_selected", selectedRow, selectedCol),
+                offsetX + 110, paletteY + cellSize + 50
+            )
+        end
+        
+        if errorMessage ~= "" then
+            local width = love.graphics.getWidth()
+            love.graphics.setColor(0.9, 0.1, 0.1, 1)
+            local font = love.graphics.getFont()
+            local textWidth = font:getWidth(errorMessage)
+            love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, paletteY - 60, textWidth + 40, 40, 5, 5)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.print(errorMessage, width/2 - textWidth/2, paletteY - 50)
+        end
     end
     
     -- Bottom-right undo/redo + top-right timer
@@ -385,6 +483,11 @@ function module.draw()
     local timerFont  = love.graphics.getFont()
     local timerWidth = timerFont:getWidth(timeText)
     love.graphics.print(timeText, screenWidth - timerWidth - 20, 10)
+
+    -- pause text (above undo/redo)
+    local pauseText = isPaused and "Press SPACE to unpause" or "Press SPACE to pause"
+    local pauseWidth = timerFont:getWidth(pauseText)
+    love.graphics.print(pauseText, screenWidth - pauseWidth - 20, screenHeight - 80)
 
     -- undo / redo (bottom right)
     local undoText = "Press U to undo | Press R to redo"
@@ -404,20 +507,49 @@ function module.draw()
     love.graphics.rectangle("fill", newBtn.x, newBtn.y, newBtn.w, newBtn.h, 8, 8)
     theme.setColor("text")
     love.graphics.printf("New", newBtn.x, newBtn.y + 5, newBtn.w, "center")
+    
+    -- Draw save message if active
+    if saveMessage ~= "" then
+        local messageX = screenWidth / 2
+        local messageY = 60
+        love.graphics.setColor(0.2, 0.7, 0.2, 1)
+        local messageFont = love.graphics.getFont()
+        local messageWidth = messageFont:getWidth(saveMessage)
+        love.graphics.rectangle('fill', messageX - messageWidth/2 - 20, messageY - 15, messageWidth + 40, 40, 5, 5)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(saveMessage, messageX - messageWidth/2, messageY - 5)
+    end
 end
 
 function module.mousepressed(x, y, button)
+    if not puzzleInitialized or isPaused then return end
+    
     if button == 1 then
+        -- Save button clicked
         if x >= saveBtn.x and x <= saveBtn.x + saveBtn.w and
            y >= saveBtn.y and y <= saveBtn.y + saveBtn.h then
-            Save.save("2d", module.currentDifficulty, grid, fixed)
+            local state = module.exportState()
+            if state and Save.save("2d", module.currentDifficulty, state) then
+                saveMessage = "Game Saved!"
+                saveMessageTimer = 2  -- Show for 2 seconds
+            else
+                saveMessage = "Save Failed!"
+                saveMessageTimer = 2
+            end
             return
         end
 
+        -- New game button clicked
         if x >= newBtn.x and x <= newBtn.x + newBtn.w and
            y >= newBtn.y and y <= newBtn.y + newBtn.h then
+            -- Delete the current save file
             Save.delete("2d", module.currentDifficulty)
-            return "back"
+            -- Reload the puzzle
+            puzzleInitialized = false
+            module.load(module.currentDifficulty)
+            saveMessage = "New Game!"
+            saveMessageTimer = 2  -- Show for 2 seconds
+            return
         end
     end
 
@@ -453,6 +585,17 @@ function module.mousereleased(x, y, button)
 end
 
 function module.keypressed(key)
+    if not puzzleInitialized then return end
+    
+    -- Space to toggle pause
+    if key == "space" then
+        togglePause()
+        return
+    end
+    
+    -- Don't process other keys if paused
+    if isPaused then return end
+    
     if key == "u" then
         undo()
         return
@@ -511,6 +654,8 @@ module._test = {
     redo           = redo,
     getMoveHistory = function() return moveHistory end,
     getUndoneMoves = function() return undoneMoves end,
+    togglePause    = togglePause,
+    isPaused       = function() return isPaused end,
 }
 
 return module
