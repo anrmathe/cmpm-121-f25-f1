@@ -6,6 +6,7 @@ local locale = require("locale")
 -- load external dsl config
 local config = require("config")
 local Win    = require("win")   -- win check
+local Save   = require("save")
 
 local boards = {}
 local rotation = {x = 0.3, y = 0.3}
@@ -29,6 +30,17 @@ local puzzleComplete = false
 -- Pause state
 local isPaused = false
 
+-- Save/New game feedback
+local saveMessage = ""
+local saveMessageTimer = 0
+
+-- Track if puzzle is initialized
+local puzzleInitialized = false
+
+-- Save/New buttons
+local saveBtn = {x = 20,  y = 0, w = 60, h = 25}
+local newBtn  = {x = 110, y = 0, w = 60, h = 25}
+
 -- format elapsed time as M:SS or HH:MM:SS
 local function formatElapsed(seconds)
     local total = math.floor(seconds)
@@ -45,7 +57,7 @@ end
 
 -- Toggle pause state
 local function togglePause()
-    if puzzleComplete then return end
+    if puzzleComplete or not puzzleInitialized then return end
     isPaused = not isPaused
 end
 
@@ -198,9 +210,85 @@ local function removeNumbers(board)
     end
 end
 
+-- Export current game state
+function module.exportState()
+    if not puzzleInitialized then return nil end
+    
+    -- Convert boards to a saveable format
+    local saveBoards = {}
+    for faceIndex = 1, 6 do
+        saveBoards[faceIndex] = {}
+        for row = 1, 9 do
+            saveBoards[faceIndex][row] = {}
+            for col = 1, 9 do
+                local cell = boards[faceIndex][row][col]
+                saveBoards[faceIndex][row][col] = {
+                    value = cell.value,
+                    fixed = cell.fixed,
+                    x = cell.x,
+                    y = cell.y,
+                    z = cell.z,
+                    faceIndex = cell.faceIndex
+                }
+            end
+        end
+    end
+    
+    return {
+        boards = saveBoards,
+        moveHistory = moveHistory,
+        undoneMoves = undoneMoves,
+        elapsedTime = elapsedTime,
+        puzzleComplete = puzzleComplete,
+        rotation = {x = rotation.x, y = rotation.y},
+        selectedCell = selectedCell
+    }
+end
+
+-- Load saved game state
+function module.loadSavedState(state)
+    if not state then return false end
+    if not state.boards then return false end
+    
+    -- Restore boards from saved state
+    boards = {}
+    for faceIndex = 1, 6 do
+        boards[faceIndex] = {}
+        for row = 1, 9 do
+            boards[faceIndex][row] = {}
+            for col = 1, 9 do
+                local savedCell = state.boards[faceIndex][row][col]
+                boards[faceIndex][row][col] = {
+                    value = savedCell.value or 0,
+                    fixed = savedCell.fixed or false,
+                    x = savedCell.x or 0,
+                    y = savedCell.y or 0,
+                    z = savedCell.z or 0,
+                    faceIndex = savedCell.faceIndex or faceIndex
+                }
+            end
+        end
+    end
+    
+    -- Restore other state
+    moveHistory = state.moveHistory or {}
+    undoneMoves = state.undoneMoves or {}
+    elapsedTime = state.elapsedTime or 0
+    puzzleComplete = state.puzzleComplete or false
+    rotation = state.rotation or {x = 0.3, y = 0.3}
+    selectedCell = state.selectedCell
+    
+    puzzleInitialized = true
+    isPaused = false
+    errorMessage = ""
+    errorTimer = 0
+    
+    return true
+end
+
 -- Record a move in the history
 local function recordMove(faceIndex, row, col, oldValue, newValue)
-    if isPaused then return end
+    if isPaused or not puzzleInitialized then return end
     
     -- If we're recording a new move after undoing, clear the undone moves
     if #undoneMoves > 0 then
@@ -219,11 +307,14 @@ local function recordMove(faceIndex, row, col, oldValue, newValue)
 
     -- Add to history
     table.insert(moveHistory, move)
+    
+    -- Autosave
+    Save.autosave("3d", currentDifficulty, module.exportState())
 end
 
 -- Undo the last move
 local function undoLastMove()
-    if isPaused then return end
+    if isPaused or not puzzleInitialized then return end
     if #moveHistory == 0 then
         errorMessage = "No moves to undo!"
         errorTimer   = 2
@@ -248,12 +339,15 @@ local function undoLastMove()
     errorMessage = ""
     errorTimer   = 0
     
+    -- Autosave
+    Save.autosave("3d", currentDifficulty, module.exportState())
+    
     return true
 end
 
 -- Redo the last undone move
 local function redoLastMove()
-    if isPaused then return end
+    if isPaused or not puzzleInitialized then return end
     if #undoneMoves == 0 then
         errorMessage = "No moves to redo!"
         errorTimer   = 2
@@ -278,6 +372,9 @@ local function redoLastMove()
     errorMessage = ""
     errorTimer   = 0
     
+    -- Autosave
+    Save.autosave("3d", currentDifficulty, module.exportState())
+    
     return true
 end
 
@@ -288,6 +385,10 @@ local function initBoards()
     elapsedTime    = 0
     puzzleComplete = false
     isPaused       = false
+    selectedCell   = nil
+    errorMessage   = ""
+    errorTimer     = 0
+    rotation       = {x = 0.3, y = 0.3}
     
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
@@ -308,6 +409,8 @@ local function initBoards()
         fillBoard(boards[faceIndex])
         removeNumbers(boards[faceIndex])
     end
+    
+    puzzleInitialized = true
 end
 
 local function isBoardComplete(board)
@@ -341,11 +444,36 @@ function module.load(difficulty)
     elapsedTime       = 0
     puzzleComplete    = false
     isPaused          = false
+    puzzleInitialized = false
+    saveMessage       = ""
+    saveMessageTimer  = 0
+
+    local saved = Save.load("3d", difficulty)
+    if saved then
+        if module.loadSavedState(saved) then
+            return
+        else
+            -- If saved state is corrupted, delete it and generate new
+            Save.delete("3d", difficulty)
+        end
+    end
+
+    -- Generate new puzzle
     initBoards()
+    
+    -- Initial autosave
+    Save.autosave("3d", difficulty, module.exportState())
 end
 
 function module.update(dt)
-    if isPaused or puzzleComplete then return end
+    if not puzzleInitialized then return end
+    
+    if saveMessageTimer > 0 then
+        saveMessageTimer = saveMessageTimer - dt
+        if saveMessageTimer <= 0 then
+            saveMessage = ""
+        end
+    end
     
     if errorTimer > 0 then
         errorTimer = errorTimer - dt
@@ -354,14 +482,14 @@ function module.update(dt)
         end
     end
 
-    if not puzzleComplete then
-        elapsedTime = elapsedTime + dt
+    if isPaused or puzzleComplete then return end
 
-        if isCubeComplete() then
-            puzzleComplete = true
-            Win.setTime(elapsedTime)
-            return "win"
-        end
+    elapsedTime = elapsedTime + dt
+
+    if isCubeComplete() then
+        puzzleComplete = true
+        Win.setTime(elapsedTime)
+        return "win"
     end
 end
 
@@ -485,6 +613,16 @@ local function drawCell(cell, row, col, faceIndex, width, height)
 end
 
 function module.draw()
+    if not puzzleInitialized then 
+        -- Draw loading message
+        local width, height = love.graphics.getDimensions()
+        love.graphics.setColor(theme.getTheme().background)
+        love.graphics.rectangle("fill", 0, 0, width, height)
+        love.graphics.setColor(theme.getTheme().text)
+        love.graphics.print("Loading puzzle...", width/2 - 50, height/2)
+        return
+    end
+    
     local t = theme.getTheme()
     local p = theme.getPalette()
     local width, height = love.graphics.getDimensions()
@@ -563,17 +701,72 @@ function module.draw()
     local undoWidth = font:getWidth(undoText)
     love.graphics.print(undoText, width - undoWidth - 20, height - 40)
     
+    -- Save / New buttons
+    saveBtn.y = height - 40
+    newBtn.y  = height - 40
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", saveBtn.x, saveBtn.y, saveBtn.w, saveBtn.h, 8, 8)
+    theme.setColor("text")
+    love.graphics.printf("Save", saveBtn.x, saveBtn.y + 5, saveBtn.w, "center")
+
+    love.graphics.setColor(0.5, 0.5, 0.5)
+    love.graphics.rectangle("fill", newBtn.x, newBtn.y, newBtn.w, newBtn.h, 8, 8)
+    theme.setColor("text")
+    love.graphics.printf("New", newBtn.x, newBtn.y + 5, newBtn.w, "center")
+    
+    -- Draw save message if active
+    if saveMessage ~= "" then
+        local messageX = width / 2
+        local messageY = 60
+        love.graphics.setColor(0.2, 0.7, 0.2, 1)
+        local messageFont = love.graphics.getFont()
+        local messageWidth = messageFont:getWidth(saveMessage)
+        love.graphics.rectangle('fill', messageX - messageWidth/2 - 20, messageY - 15, messageWidth + 40, 40, 5, 5)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(saveMessage, messageX - messageWidth/2, messageY - 5)
+    end
+    
     if errorMessage ~= "" then
         love.graphics.setColor(0.9, 0.1, 0.1, 1)
         local textWidth = font:getWidth(errorMessage)
-        love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, height - 80, textWidth + 40, 40, 5, 5)
+        love.graphics.rectangle('fill', width/2 - textWidth/2 - 20, height - 120, textWidth + 40, 40, 5, 5)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print(errorMessage, width/2 - textWidth/2, height - 70)
+        love.graphics.print(errorMessage, width/2 - textWidth/2, height - 110)
     end
 end
 
 function module.mousepressed(x, y, button)
-    if isPaused then return end
+    if not puzzleInitialized or isPaused then return end
+    
+    if button == 1 then
+        -- Save button clicked
+        if x >= saveBtn.x and x <= saveBtn.x + saveBtn.w and
+           y >= saveBtn.y and y <= saveBtn.y + saveBtn.h then
+            local state = module.exportState()
+            if state and Save.save("3d", currentDifficulty, state) then
+                saveMessage = "Game Saved!"
+                saveMessageTimer = 2  -- Show for 2 seconds
+            else
+                saveMessage = "Save Failed!"
+                saveMessageTimer = 2
+            end
+            return
+        end
+
+        -- New game button clicked
+        if x >= newBtn.x and x <= newBtn.x + newBtn.w and
+           y >= newBtn.y and y <= newBtn.y + newBtn.h then
+            -- Delete the current save file
+            Save.delete("3d", currentDifficulty)
+            -- Reload the puzzle
+            puzzleInitialized = false
+            module.load(currentDifficulty)
+            saveMessage = "New Game!"
+            saveMessageTimer = 2  -- Show for 2 seconds
+            return
+        end
+    end
     
     if button == 1 then
         mouseDown = true
@@ -609,7 +802,7 @@ function module.mousereleased(x, y, button)
 end
 
 function module.mousemoved(x, y, dx, dy)
-    if isPaused then return end
+    if not puzzleInitialized or isPaused then return end
     if mouseDown then
         rotation.y = rotation.y + dx * 0.01
         rotation.x = rotation.x + dy * 0.01
@@ -618,6 +811,8 @@ function module.mousemoved(x, y, dx, dy)
 end
 
 function module.keypressed(key)
+    if not puzzleInitialized then return end
+    
     -- Space to toggle pause
     if key == "space" then
         togglePause()
@@ -682,6 +877,8 @@ module._test = {
     getUndoneMoves   = function() return undoneMoves end,
     togglePause      = togglePause,
     isPaused         = function() return isPaused end,
+    exportState      = module.exportState,
+    loadSavedState   = module.loadSavedState,
 }
 
 return module
