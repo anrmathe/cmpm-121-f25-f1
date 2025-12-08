@@ -140,8 +140,8 @@ function module.draw()
     theme.setColor("text")
     love.graphics.printf(autoLabel, width/2 - 85, autoY + 10, 170, "center")
 
-    
-    
+    module.buttons.autosave = {x = width/2 - 85, y = autoY, w = 170, h = 40}
+
     local backY = height - 100
     theme.setPaletteColor("button")
     love.graphics.rectangle("fill", width/2 - 75, backY, 150, 50, 10, 10)
