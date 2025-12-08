@@ -5,37 +5,37 @@ local locale = require("locale")
 local config = require("config")
 
 -- -- ASSETS -- --
-local floorModel = g3d.newModel("assets/cube.obj", nil, {0, -1, 0}, nil, {50, 1, 50})
-local boxModel = g3d.newModel("assets/cube.obj")
+local floorModel  = g3d.newModel("assets/cube.obj",   nil, {0, -1, 0}, nil, {50, 1, 50})
+local boxModel    = g3d.newModel("assets/cube.obj")
 local sphereModel = g3d.newModel("assets/sphere.obj")
 
 -- -- STATE -- --
 local mouseLocked = false
-local boxes = {}
+local boxes   = {}
 local spheres = {}
-local inventory = 0
-local inventoryCapacity = 20
+local inventory          = 0
+local inventoryCapacity  = 20
 
 -- physics
-local playerHeight = 0.5   -- ground height of player
-local playerY = playerHeight
-local playerVelY = 0
-local gravity = -6         
-local jumpSpeed = 4.5      
+local playerHeight = 0.5   -- base ground level
+local playerY      = playerHeight
+local playerVelY   = 0
+local gravity      = -6         
+local jumpSpeed    = 4.5      
 
 local collectRadius = 2
-local playerRadius = 0.5
+local playerRadius  = 0.5
 
 -- Camera angles
-local yaw = 0
+local yaw   = 0
 local pitch = 0
 
 -- Joystick + camera control state
-local joystickX, joystickY = 0, 0        
-local joystickTouchId = nil              
-local mouseJoystickActive = false        
-local lookTouchId = nil                  
-local mouseLookDragActive = false        
+local joystickX, joystickY   = 0, 0        
+local joystickTouchId        = nil              
+local mouseJoystickActive    = false        
+local lookTouchId            = nil                  
+local mouseLookDragActive    = false        
 
 -- Joystick geometry 
 local function getJoystickCenter()
@@ -69,36 +69,54 @@ local function updateJoystickFromPosition(x, y)
     joystickY = -dy / r   -- up = forward, down = backward
 end
 
--- jump action
+-- support height under the player at (x,z) 
+local function computeSupportHeight(px, pz)
+    local supportY = playerHeight
+    for _, box in ipairs(boxes) do
+        local halfW = box.sx
+        local halfD = box.sz
+        if px > box.x - halfW - playerRadius and px < box.x + halfW + playerRadius and
+           pz > box.z - halfD - playerRadius and pz < box.z + halfD + playerRadius then
+            local topY = box.y + box.sy
+            if topY > supportY then
+                supportY = topY
+            end
+        end
+    end
+    return supportY
+end
+
+-- try to jump 
 local function tryJump()
-    if playerVelY <= 0 and math.abs(playerY - playerHeight) < 0.01 then
+    local supportY = computeSupportHeight(g3d.camera.position[1], g3d.camera.position[3])
+    if playerVelY <= 0 and math.abs(playerY - supportY) < 0.05 then
         playerVelY = jumpSpeed
     end
 end
 
 function M.load()
-    playerY = playerHeight
+    playerY    = playerHeight
     playerVelY = 0
 
     g3d.camera.position = {0, playerY, 5}
-    g3d.camera.target = {0, playerY, 0}
-    g3d.camera.up = {0, 1, 0}
+    g3d.camera.target   = {0, playerY, 0}
+    g3d.camera.up       = {0, 1, 0}
     
-    yaw = math.pi
+    yaw   = math.pi
     pitch = 0
 
-    local worldCfg = config.getWorld3D()
-    local boxCfg = worldCfg and worldCfg.boxes or {}
-    local sphereCfg = worldCfg and worldCfg.spheres or {}
-    local invCfg = worldCfg and worldCfg.inventory or {}
+    local worldCfg  = config.getWorld3D()
+    local boxCfg    = worldCfg and worldCfg.boxes    or {}
+    local sphereCfg = worldCfg and worldCfg.spheres  or {}
+    local invCfg    = worldCfg and worldCfg.inventory or {}
 
-    local boxCount   = boxCfg.count or 50
-    local boxMinX    = boxCfg.minX or -20
-    local boxMaxX    = boxCfg.maxX or  20
-    local boxMinZ    = boxCfg.minZ or -20
-    local boxMaxZ    = boxCfg.maxZ or  20
-    local boxMinH    = boxCfg.minHeight or 0.5
-    local boxMaxH    = boxCfg.maxHeight or 1.5
+    local boxCount = boxCfg.count or 50
+    local boxMinX  = boxCfg.minX or -20
+    local boxMaxX  = boxCfg.maxX or  20
+    local boxMinZ  = boxCfg.minZ or -20
+    local boxMaxZ  = boxCfg.maxZ or  20
+    local boxMinH  = boxCfg.minHeight or 0.5
+    local boxMaxH  = boxCfg.maxHeight or 1.5
 
     local sphereCount = sphereCfg.count or 20
     local sphereMinX  = sphereCfg.minX or -20
@@ -108,30 +126,87 @@ function M.load()
 
     inventoryCapacity = invCfg.capacity or 20
     
+    -- boxes: some singles, some platforming
     boxes = {}
-    for i = 1, boxCount do
-        local sx = 0.5
-        local sy = math.random() * (boxMaxH - boxMinH) + boxMinH
-        local sz = 0.5
-        
-        local baseR = math.random(50, 90) / 100
-        local baseG = math.random(50, 90) / 100
-        local baseB = math.random(50, 90) / 100
-        
-        table.insert(boxes, {
-            x = math.random(boxMinX, boxMaxX),
-            y = 0,
-            z = math.random(boxMinZ, boxMaxZ),
-            r = math.random() * math.pi,
-            sx = sx,
-            sy = sy,
-            sz = sz,
-            color = {baseR, baseG, baseB}
-        })
+    local i = 1
+    while i <= boxCount do
+        local makeStairs = (math.random() < 0.25) and (i <= boxCount - 2)
+        if makeStairs then
+            local baseX = math.random(boxMinX, boxMaxX)
+            local baseZ = math.random(boxMinZ, boxMaxZ)
+            local dirX, dirZ = 1, 0
+            if math.random() < 0.5 then dirX, dirZ = 0, 1 end
+
+            local stepHeight = math.random() * (boxMaxH - boxMinH) + boxMinH
+            local sx, sz = 0.6, 0.6
+
+            for step = 0, 2 do
+                local sy = stepHeight * (1 + step * 0.4)
+                local baseR = math.random(50, 90) / 100
+                local baseG = math.random(50, 90) / 100
+                local baseB = math.random(50, 90) / 100
+
+                table.insert(boxes, {
+                    x = baseX + step * dirX * (sx * 2 + 0.2),
+                    y = 0,
+                    z = baseZ + step * dirZ * (sz * 2 + 0.2),
+                    r = math.random() * math.pi,
+                    sx = sx,
+                    sy = sy,
+                    sz = sz,
+                    color = {baseR, baseG, baseB}
+                })
+            end
+            i = i + 3
+        else
+            local sx = 0.5
+            local sy = math.random() * (boxMaxH - boxMinH) + boxMinH
+            local sz = 0.5
+            
+            local baseR = math.random(50, 90) / 100
+            local baseG = math.random(50, 90) / 100
+            local baseB = math.random(50, 90) / 100
+            
+            table.insert(boxes, {
+                x = math.random(boxMinX, boxMaxX),
+                y = 0,
+                z = math.random(boxMinZ, boxMaxZ),
+                r = math.random() * math.pi,
+                sx = sx,
+                sy = sy,
+                sz = sz,
+                color = {baseR, baseG, baseB}
+            })
+
+            i = i + 1
+        end
     end
     
+    -- spheres: some in the air on top of boxes, rest on the ground
     spheres = {}
-    for i = 1, sphereCount do
+    local maxPlatformOrbs = math.min(#boxes, math.floor(sphereCount * 0.6))
+    local usedBox = {}
+    local placed = 0
+
+    while placed < maxPlatformOrbs do
+        local idx = math.random(1, #boxes)
+        if not usedBox[idx] then
+            usedBox[idx] = true
+            local box = boxes[idx]
+            local topY = box.y + box.sy
+            table.insert(spheres, {
+                x = box.x,
+                y = topY + 0.6,
+                z = box.z,
+                collected = false,
+                bobPhase = math.random() * math.pi * 2,
+                glowPhase = math.random() * math.pi * 2
+            })
+            placed = placed + 1
+        end
+    end
+
+    for n = placed + 1, sphereCount do
         table.insert(spheres, {
             x = math.random(sphereMinX, sphereMaxX),
             y = 1,
@@ -142,19 +217,28 @@ function M.load()
         })
     end
     
-    inventory = 0
-    mouseLocked = false
+    inventory      = 0
+    mouseLocked    = false
     love.mouse.setVisible(true)
     love.mouse.setRelativeMode(false)
 
-    joystickX, joystickY = 0, 0
-    joystickTouchId = nil
-    mouseJoystickActive = false
-    lookTouchId = nil
-    mouseLookDragActive = false
+    joystickX, joystickY     = 0, 0
+    joystickTouchId          = nil
+    mouseJoystickActive      = false
+    lookTouchId              = nil
+    mouseLookDragActive      = false
 end
 
-local function checkBoxCollision(newX, newZ, box)
+-- boxes block you only if you're are not standing on top of them
+local function checkBoxCollision(newX, newZ, box, y)
+    local topY = box.y + box.sy
+
+    -- If the player's "body height" is at or above the top surface,
+    -- treat this box as floor, not as a wall.
+    if y >= topY - 0.05 then
+        return false
+    end
+
     local boxHalfWidth = box.sx
     local boxHalfDepth = box.sz
     
@@ -171,6 +255,7 @@ local function checkBoxCollision(newX, newZ, box)
     return playerMaxX > boxMinX and playerMinX < boxMaxX and
            playerMaxZ > boxMinZ and playerMinZ < boxMaxZ
 end
+
 
 function M.update(dt)
     if not love.mouse.isDown(1) then
@@ -229,7 +314,7 @@ function M.update(dt)
     
     local collisionDetected = false
     for _, box in ipairs(boxes) do
-        if checkBoxCollision(newX, newZ, box) then
+        if checkBoxCollision(newX, newZ, box, playerY) then
             collisionDetected = true
             break
         end
@@ -241,7 +326,7 @@ function M.update(dt)
     else
         local canMoveX = true
         for _, box in ipairs(boxes) do
-            if checkBoxCollision(newX, oldZ, box) then
+            if checkBoxCollision(newX, oldZ, box, playerY) then
                 canMoveX = false
                 break
             end
@@ -252,7 +337,7 @@ function M.update(dt)
         
         local canMoveZ = true
         for _, box in ipairs(boxes) do
-            if checkBoxCollision(oldX, newZ, box) then
+            if checkBoxCollision(oldX, newZ, box, playerY) then
                 canMoveZ = false
                 break
             end
@@ -262,11 +347,13 @@ function M.update(dt)
         end
     end
 
+    -- vertical physics + standing on box tops
     playerVelY = playerVelY + gravity * dt
-    playerY = playerY + playerVelY * dt
+    playerY    = playerY + playerVelY * dt
 
-    if playerY < playerHeight then
-        playerY = playerHeight
+    local supportY = computeSupportHeight(g3d.camera.position[1], g3d.camera.position[3])
+    if playerY < supportY then
+        playerY    = supportY
         playerVelY = 0
     end
     
@@ -282,12 +369,13 @@ function M.update(dt)
     
     for _, sphere in ipairs(spheres) do
         if not sphere.collected then
-            sphere.bobPhase = sphere.bobPhase + dt * 2
+            sphere.bobPhase  = sphere.bobPhase  + dt * 2
             sphere.glowPhase = sphere.glowPhase + dt * 3
             
             local dx = g3d.camera.position[1] - sphere.x
+            local dy = g3d.camera.position[2] - sphere.y
             local dz = g3d.camera.position[3] - sphere.z
-            local distance = math.sqrt(dx * dx + dz * dz)
+            local distance = math.sqrt(dx * dx + dy * dy + dz * dz)
             
             if distance < collectRadius and inventory < inventoryCapacity then
                 sphere.collected = true
@@ -430,8 +518,8 @@ end
 
 function M.mousereleased(x, y, button)
     if button == 1 then
-        mouseJoystickActive = false
-        mouseLookDragActive = false
+        mouseJoystickActive  = false
+        mouseLookDragActive  = false
         joystickX, joystickY = 0, 0
     end
 end
@@ -440,11 +528,11 @@ function M.mousemoved(x, y, dx, dy)
     local sensitivity = 0.003
 
     if mouseLocked then
-        yaw = yaw + dx * sensitivity
+        yaw   = yaw + dx * sensitivity
         pitch = pitch - dy * sensitivity
     else
         if mouseLookDragActive then
-            yaw = yaw + dx * sensitivity
+            yaw   = yaw + dx * sensitivity
             pitch = pitch - dy * sensitivity
         end
         if mouseJoystickActive then
@@ -502,7 +590,7 @@ function M.touchmoved(id, x, y, dx, dy, pressure)
         updateJoystickFromPosition(x, y)
     elseif id == lookTouchId then
         local sensitivity = 0.003
-        yaw = yaw + dx * sensitivity
+        yaw   = yaw + dx * sensitivity
         pitch = pitch - dy * sensitivity
         pitch = math.max(-math.pi/2 + 0.1, math.min(math.pi/2 - 0.1, pitch))
     end
