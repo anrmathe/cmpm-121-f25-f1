@@ -286,16 +286,17 @@ function module.loadSavedState(state)
     return true
 end
 
--- Record a move in the history
+local function autosave3D()
+    Save.autosave("3d", currentDifficulty, module.exportState())
+end
+
 local function recordMove(faceIndex, row, col, oldValue, newValue)
     if isPaused or not puzzleInitialized then return end
-    
-    -- If we're recording a new move after undoing, clear the undone moves
+
     if #undoneMoves > 0 then
         undoneMoves = {}
     end
-    
-    -- Create move record
+
     local move = {
         faceIndex = faceIndex,
         row       = row,
@@ -305,14 +306,10 @@ local function recordMove(faceIndex, row, col, oldValue, newValue)
         timestamp = os.time()
     }
 
-    -- Add to history
     table.insert(moveHistory, move)
-    
-    -- Autosave
-    Save.autosave("3d", currentDifficulty, module.exportState())
+    autosave3D()
 end
 
--- Undo the last move
 local function undoLastMove()
     if isPaused or not puzzleInitialized then return end
     if #moveHistory == 0 then
@@ -321,31 +318,17 @@ local function undoLastMove()
         return
     end
     
-    -- Get the last move
-    local move = moveHistory[#moveHistory]
-    
-    -- Remove from history
-    table.remove(moveHistory)
-    
-    -- Store in undone moves
+    local move = table.remove(moveHistory)
     table.insert(undoneMoves, move)
-    
-    -- Apply the undo
-    local board = boards[move.faceIndex]
-    local cell  = board[move.row][move.col]
-    cell.value  = move.oldValue
-    
-    -- Clear any error messages
+    boards[move.faceIndex][move.row][move.col].value = move.oldValue
+
     errorMessage = ""
     errorTimer   = 0
-    
-    -- Autosave
-    Save.autosave("3d", currentDifficulty, module.exportState())
-    
+
+    autosave3D()
     return true
 end
 
--- Redo the last undone move
 local function redoLastMove()
     if isPaused or not puzzleInitialized then return end
     if #undoneMoves == 0 then
@@ -354,32 +337,18 @@ local function redoLastMove()
         return
     end
     
-    -- Get the last undone move
-    local move = undoneMoves[#undoneMoves]
-    
-    -- Remove from undone moves
-    table.remove(undoneMoves)
-    
-    -- Apply the redo
-    local board = boards[move.faceIndex]
-    local cell  = board[move.row][move.col]
-    cell.value  = move.newValue
-    
-    -- Add back to history
+    local move = table.remove(undoneMoves)
+    boards[move.faceIndex][move.row][move.col].value = move.newValue
     table.insert(moveHistory, move)
-    
-    -- Clear any error messages
+
     errorMessage = ""
     errorTimer   = 0
-    
-    -- Autosave
-    Save.autosave("3d", currentDifficulty, module.exportState())
-    
+
+    autosave3D()
     return true
 end
 
 local function initBoards()
-    -- Clear history when starting new game
     moveHistory    = {}
     undoneMoves    = {}
     elapsedTime    = 0
@@ -389,7 +358,7 @@ local function initBoards()
     errorMessage   = ""
     errorTimer     = 0
     rotation       = {x = 0.3, y = 0.3}
-    
+
     for faceIndex = 1, 6 do
         boards[faceIndex] = {}
         for row = 1, 9 do
@@ -409,9 +378,11 @@ local function initBoards()
         fillBoard(boards[faceIndex])
         removeNumbers(boards[faceIndex])
     end
-    
+
     puzzleInitialized = true
+    autosave3D()
 end
+
 
 local function isBoardComplete(board)
     for r = 1, 9 do

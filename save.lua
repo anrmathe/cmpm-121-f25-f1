@@ -17,19 +17,26 @@ end
 function Save.save(mode, difficulty, state)
     if not state then return end
     local filename = makeFilename(mode, difficulty)
+
     local payload = {
         mode = mode,
         difficulty = difficulty,
         timestamp = os.time(),
-        grid = state.grid,
-        fixed = state.fixed,
         boards = state.boards,
+        grid = state.grid,                 
+        fixed = state.fixed,                
         moveHistory = state.moveHistory or {},
         undoneMoves = state.undoneMoves or {},
+        elapsedTime = state.elapsedTime,
+        puzzleComplete = state.puzzleComplete,
+        rotation = state.rotation,
+        selectedCell = state.selectedCell,
         autosave = state.autosave ~= false
     }
+
     return love.filesystem.write(filename, encode(payload))
 end
+
 
 Save.autosaveEnabled = true
 
