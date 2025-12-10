@@ -14,7 +14,11 @@ the fire unless it has enough water).**
 **[save system] Support multiple save points as well as an auto-save feature so
 that the player cannot lose progress by accidentally closing the game app.**
 
-- The game has an auto save function that can be toggled on or off depending on the user's preference. There is also a manual save option that players can click and a new game button if they would like to delete their most recent saved puzzle. As long as the user clicks the same difficulty when opening the game again, their old saved puzzle will open up just as it was left.
+- The game has an auto save function that can be toggled on or off depending on
+  the user's preference. There is also a manual save option that players can
+  click and a new game button if they would like to delete their most recent
+  saved puzzle. As long as the user clicks the same difficulty when opening the
+  game again, their old saved puzzle will open up just as it was left.
 
 **[visual themes] Support light and dark modes visual styles that respond to the
 user's preferences set in the host environment (e.g. operating system or
@@ -30,38 +34,61 @@ just changing the border color of the game window)**
 **[touchscreen] Support touchscreen-only gameplay (no requirement of mouse and
 keyboard).**
 
-- The game has buttons for numbers on the sudoku world where they can press to interact and fill in numbers without having to use keyboard. They can also use the mouse the rotate the cube in order to access the other sides of the cubes. In the 3d world, there are jump buttons and a joystick that the player can use to move their player around, as well has the ability to click on the screen to control their camera, mimicing the usage of mouse and keyboard.
+- The game has buttons for numbers on the sudoku world where they can press to
+  interact and fill in numbers without having to use keyboard. They can also use
+  the mouse the rotate the cube in order to access the other sides of the cubes.
+  In the 3d world, there are jump buttons and a joystick that the player can use
+  to move their player around, as well has the ability to click on the screen to
+  control their camera, mimicing the usage of mouse and keyboard.
 
 **[i18n + l10n] Support three different natural languages including English, a
 language with a logographic script (e.g. 中文), and a language with a
 right-to-left script (e.g. العربية).**
 
-- We supported three different natural languages: English, Chinese, and Arabic. We built a lightweight localization system (locale.lua) that stores all in-game text for each language and handles runtime switching between them. We also added full language-aware font sets in main.lua so logographic fonts (中文) and right-to-left Arabic script display correctly. All the text in the game menus, instructions, error messages, and win screens automatically update when a new language is chosen.
+- We supported three different natural languages: English, Chinese, and Arabic.
+  We built a lightweight localization system (locale.lua) that stores all
+  in-game text for each language and handles runtime switching between them. We
+  also added full language-aware font sets in main.lua so logographic fonts
+  (中文) and right-to-left Arabic script display correctly. All the text in the
+  game menus, instructions, error messages, and win screens automatically update
+  when a new language is chosen.
 
 **[unlimited undo] Support unlimited levels of undo of the major play actions
 (such as moving to a scene or interacting with a specific object, but don't
 worry about undo within a physics interaction)**
 
-- TBD
+- both 2d sudoku and 3d sudoku can undo all the moves made previously (and redo
+  if the player didnt mean to undo that much)
 
 **[external DSL] Use an external DSL to define some of the most important design
 details in the game (possibly reusing an existing syntax like XML, JSON, or
 s-expressions), and create some kind of tool support for that DSL (e.g.
 in-editor syntax highlighting).**
 
-- I added a game_config.json which stores data's for each game setting, amount of objects and space of the players inventory in it. This is called into the game in the config.lua where it creates seperate functions for calling data for each mode, as well as calling data for the world generation. I have also included settings.json in the .vscode directory which allows highlighing of the all the variables in game_config.json and what they are allowed to contain.
+- I added a game_config.json which stores data's for each game setting, amount
+  of objects and space of the players inventory in it. This is called into the
+  game in the config.lua where it creates seperate functions for calling data
+  for each mode, as well as calling data for the world generation. I have also
+  included settings.json in the .vscode directory which allows highlighing of
+  the all the variables in game_config.json and what they are allowed to
+  contain.
 
-## Reflection
+## Final Reflection
 
 **Looking back on how you achieved the F3 requirements, how has your team’s plan
 changed since your F3 devlog? There’s learning value in you documenting how your
 team’s thinking has changed over time.**
 
-- We spread the work for this assignment a lot more evenly than the other two. We stayed fairly close to what our original plan was and didn't have to make any changes regarding how we should approach the assignment specs. If anything, we mainly tested our commits more often due to the game crashing on one person's device but not on other's. We helped each other out and made sure everyone was able to run and see the same game across all screens. 
+- We spread the work for this assignment a lot more evenly than the other two.
+  We stayed fairly close to what our original plan was and didn't have to make
+  any changes regarding how we should approach the assignment specs. If
+  anything, we mainly tested our commits more often due to the game crashing on
+  one person's device but not on other's. We helped each other out and made sure
+  everyone was able to run and see the same game across all screens.
 
 # Devlog Entry 2 - 12/01/2025
 
-## How we satisfied the software requirements
+## F3 How we satisfied the software requirements
 
 **The game uses the same 3D rendering and physics simulation identified by the
 team for F1 or suitable replacements that still satisfy the F1 requirements.**
@@ -69,7 +96,7 @@ team for F1 or suitable replacements that still satisfy the F1 requirements.**
 - We are currently using [g3d](https://github.com/groverburger/g3d) for the 3D
   physics as we had mentioned in our F1.
 
-**The game must allow the player to move between scenes (e.g. rooms)**
+## The game must allow the player to move between scenes (e.g. rooms)
 
 - The player is able to move between the puzzle and the menu by clicking the ESC
   key and then clicking the respective button for which type of game they would
@@ -113,7 +140,7 @@ their skill and/or reasoning (rather than luck)**
 - As of now, once the player completes the 2d mode of sudoku, they are taken to
   a win screen with the amount of time spent displayed as well.
 
-## Reflection
+## F3 Reflection
 
 **Looking back on how you achieved the F2 requirements, how has your team’s plan
 changed since your F1 devlog? There’s learning value in you documenting how your
