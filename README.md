@@ -30,7 +30,7 @@ just changing the border color of the game window)**
 **[touchscreen] Support touchscreen-only gameplay (no requirement of mouse and
 keyboard).**
 
-- TBD
+- The game has buttons for numbers on the sudoku world where they can press to interact and fill in numbers without having to use keyboard. They can also use the mouse the rotate the cube in order to access the other sides of the cubes. In the 3d world, there are jump buttons and a joystick that the player can use to move their player around, as well has the ability to click on the screen to control their camera, mimicing the usage of mouse and keyboard.
 
 **[i18n + l10n] Support three different natural languages including English, a
 language with a logographic script (e.g. 中文), and a language with a
@@ -49,7 +49,7 @@ details in the game (possibly reusing an existing syntax like XML, JSON, or
 s-expressions), and create some kind of tool support for that DSL (e.g.
 in-editor syntax highlighting).**
 
-- TBD
+- I added a game_config.json which stores data's for each game setting, amount of objects and space of the players inventory in it. This is called into the game in the config.lua where it creates seperate functions for calling data for each mode, as well as calling data for the world generation. I have also included settings.json in the .vscode directory which allows highlighing of the all the variables in game_config.json and what they are allowed to contain.
 
 ## Reflection
 
