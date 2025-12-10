@@ -20,7 +20,7 @@ don't have live internet access).**
 **[save system] Support multiple save points as well as an auto-save feature so
 that the player cannot lose progress by accidentally closing the game app.**
 
-- TBD
+- The game has an auto save function that can be toggled on or off depending on the user's preference. There is also a manual save option that players can click and a new game button if they would like to delete their most recent saved puzzle.
 
 **[visual themes] Support light and dark modes visual styles that respond to the
 user's preferences set in the host environment (e.g. operating system or
