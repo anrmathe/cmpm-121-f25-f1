@@ -11,12 +11,6 @@ the fire unless it has enough water).**
 
 - TBD
 
-**[offline mobile] Support offline play on some smartphone-class mobile device
-(i.e. some way of installing the app so that it can be played by players who
-don't have live internet access).**
-
-- TBD
-
 **[save system] Support multiple save points as well as an auto-save feature so
 that the player cannot lose progress by accidentally closing the game app.**
 
@@ -63,7 +57,7 @@ in-editor syntax highlighting).**
 changed since your F3 devlog? There’s learning value in you documenting how your
 team’s thinking has changed over time.**
 
-- Reflection here
+- We spread the work for this assignment a lot more evenly than the other two. We stayed fairly close to what our original plan was and didn't have to make any changes regarding how we should approach the assignment specs. If anything, we mainly tested our commits more often due to the game crashing on one person's device but not on other's. We helped each other out and made sure everyone was able to run and see the same game across all screens. 
 
 # Devlog Entry 2 - 12/01/2025
 
