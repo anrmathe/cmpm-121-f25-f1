@@ -36,7 +36,7 @@ keyboard).**
 language with a logographic script (e.g. 中文), and a language with a
 right-to-left script (e.g. العربية).**
 
-- TBD
+- We supported three different natural languages: English, Chinese, and Arabic. We built a lightweight localization system (locale.lua) that stores all in-game text for each language and handles runtime switching between them. We also added full language-aware font sets in main.lua so logographic fonts (中文) and right-to-left Arabic script display correctly. All the text in the game menus, instructions, error messages, and win screens automatically update when a new language is chosen.
 
 **[unlimited undo] Support unlimited levels of undo of the major play actions
 (such as moving to a scene or interacting with a specific object, but don't
